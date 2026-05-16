@@ -1,0 +1,37 @@
+{
+  "name": "auth-service",
+  "version": "1.0.0",
+  "scripts": {
+    "start:dev": "nest start --watch",
+    "start": "node dist/main",
+    "build": "nest build"
+  },
+  "dependencies": {
+    "@nest-gateway/shared": "*",
+    "@nestjs/common": "^10.3.0",
+    "@nestjs/config": "^4.0.4",
+    "@nestjs/core": "^11.1.19",
+    "@nestjs/jwt": "^10.2.0",
+    "@nestjs/passport": "^10.0.3",
+    "@nestjs/platform-fastify": "^11.1.19",
+    "@nestjs/typeorm": "^11.0.1",
+    "bcrypt": "^5.1.1",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
+    "passport-local": "^1.0.0",
+    "pg": "^8.11.3",
+    "reflect-metadata": "^0.2.0",
+    "rxjs": "^7.8.1",
+    "typeorm": "^0.3.20"
+  },
+  "devDependencies": {
+    "@nestjs/cli": "^11.0.21",
+    "@nestjs/schematics": "^11.1.0",
+    "@types/bcrypt": "^5.0.2",
+    "@types/node": "^20.11.0",
+    "@types/passport-jwt": "^4.0.1",
+    "@types/passport-local": "^1.0.38",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.3.0"
+  }
+}

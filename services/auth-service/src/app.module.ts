@@ -1,0 +1,33 @@
+import { Module } from '@nestjs/common';
+import { ConfigModule, ConfigService } from '@nestjs/config';
+import { TypeOrmModule } from '@nestjs/typeorm';
+import { AuthModule } from './auth/auth.module';
+import { UserEntity } from './users/user.entity';
+
+@Module({
+  imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
+
+    // TypeORM — подключение к PostgreSQL
+    TypeOrmModule.forRootAsync({
+      imports: [ConfigModule],
+      useFactory: (config: ConfigService) => ({
+        type: 'postgres',
+        host: config.get('DB_HOST', 'localhost'),
+        port: config.get<number>('DB_PORT', 5432),
+        username: config.get('DB_USER', 'postgres'),
+        password: config.get('DB_PASSWORD', 'postgres'),
+        database: config.get('DB_NAME', 'auth_db'),
+        entities: [UserEntity],
+        // synchronize: true только для разработки!
+        // В продакшне используй TypeORM migrations
+        synchronize: config.get('NODE_ENV') !== 'production',
+        logging: config.get('NODE_ENV') !== 'production',
+      }),
+      inject: [ConfigService],
+    }),
+
+    AuthModule,
+  ],
+})
+export class AppModule {}
