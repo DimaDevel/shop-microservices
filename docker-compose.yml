@@ -21,6 +21,7 @@ services:
       USER_SERVICE_URL: http://user-service:3002
       REQUEST_TIMEOUT_MS: 5000
       NODE_ENV: development
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
     networks: [public, internal]
     depends_on: [auth-service, user-service]
 
@@ -32,6 +33,9 @@ services:
       PORT: 3001
       JWT_SECRET: ${JWT_SECRET:-dev-secret-32-chars-minimum!!}
       JWT_REFRESH_SECRET: ${JWT_REFRESH_SECRET:-refresh-secret-32-chars!!}
+      JWT_ACCESS_EXPIRES_IN: ${JWT_ACCESS_EXPIRES_IN:-3600}
+      JWT_REFRESH_EXPIRES_IN: ${JWT_REFRESH_EXPIRES_IN:-604800}
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
       DB_HOST: auth-db
       DB_PORT: 5432
       DB_USER: postgres
@@ -49,6 +53,7 @@ services:
       dockerfile: services/user-service/Dockerfile
     environment:
       PORT: 3002
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
       DB_HOST: users-db
       DB_PORT: 5432
       DB_USER: postgres

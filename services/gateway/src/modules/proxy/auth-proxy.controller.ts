@@ -5,20 +5,17 @@ import {
   Req,
   Res,
   HttpCode,
+  Logger,
 } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Public } from '@nest-gateway/shared';
+import { Public, CurrentUser, RequestUser } from '@nest-gateway/shared';
 import { ProxyService } from './proxy.service';
 
-// ─────────────────────────────────────────────────────────────
-//  AuthProxyController
-//
-//  Публичные маршруты — @Public() отключает JwtAuthGuard.
-//  Просто проксируем к Auth Service, не трогая тело запроса.
-// ─────────────────────────────────────────────────────────────
 @Controller('auth')
 export class AuthProxyController {
-  constructor(private readonly proxy: ProxyService) {}
+  private readonly logger = new Logger(AuthProxyController.name);
+
+  constructor(private readonly proxyService: ProxyService) {}
 
   @Public()
   @Post('login')
@@ -28,7 +25,7 @@ export class AuthProxyController {
     @Req() req: FastifyRequest & { correlationId?: string },
     @Res() res: FastifyReply,
   ) {
-    const { status, data } = await this.proxy.proxyToAuth({
+    const { status, data } = await this.proxyService.proxyToAuth({
       method: 'POST',
       path: '/auth/login',
       body,
@@ -46,12 +43,26 @@ export class AuthProxyController {
     @Req() req: FastifyRequest & { correlationId?: string },
     @Res() res: FastifyReply,
   ) {
-    const { status, data } = await this.proxy.proxyToAuth({
+    const { status, data } = await this.proxyService.proxyToAuth({
       method: 'POST',
       path: '/auth/register',
       body,
       correlationId: req.correlationId,
     });
+
+    if (status === 201) {
+      const { userId, email } = data as { userId: string; email: string };
+      try {
+        await this.proxyService.proxyToUsers({
+          method: 'POST',
+          path: '/users',
+          body: { id: userId, email },
+          correlationId: req.correlationId,
+        });
+      } catch (err) {
+        this.logger.error(`Failed to create profile for user ${userId}: ${(err as Error).message}`);
+      }
+    }
 
     return res.status(status).send(data);
   }
@@ -64,10 +75,27 @@ export class AuthProxyController {
     @Req() req: FastifyRequest & { correlationId?: string },
     @Res() res: FastifyReply,
   ) {
-    const { status, data } = await this.proxy.proxyToAuth({
+    const { status, data } = await this.proxyService.proxyToAuth({
       method: 'POST',
       path: '/auth/refresh',
       body,
+      correlationId: req.correlationId,
+    });
+
+    return res.status(status).send(data);
+  }
+
+  @Post('logout')
+  @HttpCode(200)
+  async logout(
+    @CurrentUser() user: RequestUser,
+    @Req() req: FastifyRequest & { correlationId?: string },
+    @Res() res: FastifyReply,
+  ) {
+    const { status, data } = await this.proxyService.proxyToAuth({
+      method: 'POST',
+      path: '/auth/logout',
+      user,
       correlationId: req.correlationId,
     });
 

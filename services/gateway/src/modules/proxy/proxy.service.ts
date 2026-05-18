@@ -72,17 +72,14 @@ export class ProxyService implements OnModuleInit {
     }
   }
 
-  // Публичный метод для проксирования к Auth Service
   async proxyToAuth(options: ProxyRequestOptions) {
     return this.proxy('authService', options);
   }
 
-  // Публичный метод для проксирования к User Service
   async proxyToUsers(options: ProxyRequestOptions) {
     return this.proxy('userService', options);
   }
 
-  // Статус всех circuit breaker-ов (для /health)
   getBreakersStatus() {
     const status: Record<string, object> = {};
     for (const [name, breaker] of this.breakers) {
@@ -109,12 +106,10 @@ export class ProxyService implements OnModuleInit {
     const url = `${baseUrl}${path}`;
     const breaker = this.breakers.get(service)!;
 
-    // Строим заголовки — Gateway обогащает запрос данными пользователя
     const proxyHeaders: Record<string, string> = {
       'content-type': 'application/json',
-      // Correlation ID прокидывается во все сервисы
+      [HEADERS.INTERNAL_SECRET]: this.config.getOrThrow<string>('INTERNAL_SECRET'),
       ...(correlationId && { [HEADERS.CORRELATION_ID]: correlationId }),
-      // Данные пользователя из JWT — сервисы не парсят токен сами
       ...(user && {
         [HEADERS.USER_ID]: user.id,
         [HEADERS.USER_EMAIL]: user.email,

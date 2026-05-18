@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
+import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
 import { UserEntity } from './users/user.entity';
+import { InternalGuard } from './guards/internal.guard';
 
 @Module({
   imports: [
@@ -28,6 +30,12 @@ import { UserEntity } from './users/user.entity';
     }),
 
     AuthModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: InternalGuard,
+    },
   ],
 })
 export class AppModule {}

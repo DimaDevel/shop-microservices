@@ -4,9 +4,7 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
-  BeforeInsert,
 } from 'typeorm';
-import * as bcrypt from 'bcrypt';
 import { Role } from '@nest-gateway/shared';
 
 // ─────────────────────────────────────────────────────────────
@@ -23,7 +21,7 @@ export class UserEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column({ select: false }) // не возвращается в SELECT по умолчанию
+  @Column({ select: false }) // doesn't return passwordHash by default for security
   passwordHash: string;
 
   @Column({
@@ -45,16 +43,4 @@ export class UserEntity {
 
   @UpdateDateColumn()
   updatedAt: Date;
-
-  // Хешируем пароль перед сохранением в БД
-  @BeforeInsert()
-  async hashPassword() {
-    if (this.passwordHash) {
-      this.passwordHash = await bcrypt.hash(this.passwordHash, 12);
-    }
-  }
-
-  async validatePassword(password: string): Promise<boolean> {
-    return bcrypt.compare(password, this.passwordHash);
-  }
 }

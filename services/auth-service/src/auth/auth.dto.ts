@@ -1,12 +1,14 @@
+import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
 
 // ─────────────────────────────────────────────────────────────
 //  DTO с class-validator
-//  ValidationPipe автоматически валидирует входящие запросы.
-//  Если поле не проходит валидацию — 400 Bad Request с деталями.
+// ValidationPipe automatically validates incoming requests.
+// If a field fails validation — 400 Bad Request with details.
 // ─────────────────────────────────────────────────────────────
 
 export class LoginDto {
+  @Transform(({ value }) => value?.toLowerCase().trim())
   @IsEmail({}, { message: 'Invalid email format' })
   email: string;
 
@@ -16,6 +18,7 @@ export class LoginDto {
 }
 
 export class RegisterDto {
+  @Transform(({ value }) => value?.toLowerCase().trim())
   @IsEmail({}, { message: 'Invalid email format' })
   email: string;
 
@@ -28,10 +31,4 @@ export class RegisterDto {
 export class RefreshTokenDto {
   @IsString()
   refreshToken: string;
-}
-
-export class TokensResponseDto {
-  accessToken: string;
-  refreshToken: string;
-  expiresIn: number;
 }

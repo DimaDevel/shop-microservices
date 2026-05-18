@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsUrl, MaxLength } from 'class-validator';
+import { IsString, IsOptional, IsUrl, MaxLength, IsEmail, IsUUID } from 'class-validator';
 
 export class UpdateUserDto {
   @IsOptional()
@@ -9,4 +9,12 @@ export class UpdateUserDto {
   @IsOptional()
   @IsUrl()
   avatarUrl?: string;
+}
+
+export class CreateProfileDto {
+  @IsUUID()
+  id: string;
+
+  @IsEmail()
+  email: string;
 }

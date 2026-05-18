@@ -4,6 +4,7 @@ export const HEADERS = {
   USER_ID: 'x-user-id',
   USER_EMAIL: 'x-user-email',
   USER_ROLES: 'x-roles',
+  INTERNAL_SECRET: 'x-internal-secret',
 } as const;
 
 export enum Role {

@@ -1,31 +1,71 @@
-import { Controller, Post, Get, Body, HttpCode } from '@nestjs/common';
+import {
+  Controller,
+  Post,
+  Get,
+  Body,
+  HttpCode,
+  Headers,
+  ConflictException,
+  UnauthorizedException,
+  BadRequestException,
+} from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto, RegisterDto, RefreshTokenDto } from './auth.dto';
+import { HEADERS, Public } from '@nest-gateway/shared';
+import {
+  EmailAlreadyTakenError,
+  InvalidCredentialsError,
+  InvalidRefreshTokenError,
+  RefreshTokenRevokedError,
+} from './auth.errors';
 
 @Controller('auth')
 export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('register')
-  register(@Body() dto: RegisterDto) {
-    // ValidationPipe уже проверил dto до вызова метода
-    return this.authService.register(dto);
+  async register(@Body() dto: RegisterDto) {
+    try {
+      return await this.authService.register({ email: dto.email, password: dto.password });
+    } catch (e) {
+      if (e instanceof EmailAlreadyTakenError) throw new ConflictException(e.message);
+      throw e;
+    }
   }
 
   @Post('login')
   @HttpCode(200)
-  login(@Body() dto: LoginDto) {
-    return this.authService.login(dto);
+  async login(@Body() dto: LoginDto) {
+    try {
+      return await this.authService.login({ email: dto.email, password: dto.password });
+    } catch (e) {
+      if (e instanceof InvalidCredentialsError) throw new UnauthorizedException(e.message);
+      throw e;
+    }
   }
 
   @Post('refresh')
   @HttpCode(200)
-  refresh(@Body() dto: RefreshTokenDto) {
-    return this.authService.refresh(dto.refreshToken);
+  async refresh(@Body() dto: RefreshTokenDto) {
+    try {
+      return await this.authService.refresh(dto.refreshToken);
+    } catch (e) {
+      if (e instanceof InvalidRefreshTokenError || e instanceof RefreshTokenRevokedError) {
+        throw new UnauthorizedException(e.message);
+      }
+      throw e;
+    }
   }
 
-  @Get('health')
+  @Post('logout')
   @HttpCode(200)
+  logout(@Headers(HEADERS.USER_ID) userId: string) {
+    if (!userId) throw new BadRequestException('Missing user id');
+    return this.authService.logout(userId);
+  }
+
+  @Public()
+  @Get('health')
   health() {
     return { status: 'ok', service: 'auth-service' };
   }
