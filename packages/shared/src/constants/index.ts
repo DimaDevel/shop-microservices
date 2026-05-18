@@ -12,3 +12,8 @@ export enum Role {
   ADMIN = 'admin',
   MODERATOR = 'moderator',
 }
+
+export const KAFKA_TOPICS = {
+  ORDER_CREATED: 'order.created',
+  PDF_GENERATED: 'pdf.generated',
+} as const;

@@ -24,3 +24,27 @@ export interface ApiError {
   correlationId?: string;
   timestamp: string;
 }
+
+export interface OrderCreatedEventItem {
+  productId: string;
+  name: string;
+  quantity: number;
+  unitPrice: number;
+}
+
+export interface OrderCreatedEvent {
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  items: OrderCreatedEventItem[];
+  total: number;
+  createdAt: string;
+}
+
+export interface PdfGeneratedEvent {
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  pdfPath: string;
+  createdAt: string;
+}

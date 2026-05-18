@@ -19,11 +19,13 @@ services:
       JWT_SECRET: ${JWT_SECRET:-dev-secret-32-chars-minimum!!}
       AUTH_SERVICE_URL: http://auth-service:3001
       USER_SERVICE_URL: http://user-service:3002
+      PRODUCT_SERVICE_URL: http://product-service:3003
+      ORDER_SERVICE_URL: http://order-service:3004
       REQUEST_TIMEOUT_MS: 5000
       NODE_ENV: development
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
     networks: [public, internal]
-    depends_on: [auth-service, user-service]
+    depends_on: [auth-service, user-service, product-service, order-service]
 
   auth-service:
     build:
@@ -65,8 +67,101 @@ services:
       users-db:
         condition: service_healthy
 
-  # ── Отдельная БД для каждого сервиса ──────────────────────
-  # Database-per-service — ключевой паттерн микросервисов
+  product-service:
+    build:
+      context: .
+      dockerfile: services/product-service/Dockerfile
+    environment:
+      PORT: 3003
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
+      DB_HOST: products-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: products_db
+      NODE_ENV: development
+    networks: [internal]
+    depends_on:
+      products-db:
+        condition: service_healthy
+
+  order-service:
+    build:
+      context: .
+      dockerfile: services/order-service/Dockerfile
+    environment:
+      PORT: 3004
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
+      PRODUCT_SERVICE_URL: http://product-service:3003
+      KAFKA_BROKERS: kafka:9092
+      DB_HOST: orders-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: orders_db
+      NODE_ENV: development
+    networks: [internal]
+    depends_on:
+      orders-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+
+  pdf-service:
+    build:
+      context: .
+      dockerfile: services/pdf-service/Dockerfile
+    environment:
+      PORT: 3005
+      KAFKA_BROKERS: kafka:9092
+      PDF_OUTPUT_DIR: /app/pdfs
+      NODE_ENV: development
+    volumes:
+      - pdf-data:/app/pdfs
+    networks: [internal]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  notification-service:
+    build:
+      context: .
+      dockerfile: services/notification-service/Dockerfile
+    environment:
+      PORT: 3006
+      KAFKA_BROKERS: kafka:9092
+      NODE_ENV: development
+    networks: [internal]
+    depends_on:
+      kafka:
+        condition: service_healthy
+
+  # ── Kafka ──────────────────────────────────────────────────────
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.6.0
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks: [internal]
+
+  kafka:
+    image: confluentinc/cp-kafka:7.6.0
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    networks: [internal]
+    depends_on: [zookeeper]
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server", "localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 10
+      start_period: 30s
+
+  # ── Databases ──────────────────────────────────────────────────
   auth-db:
     image: postgres:16-alpine
     environment:
@@ -97,6 +192,36 @@ services:
       timeout: 5s
       retries: 5
 
+  products-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: products_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - products-db-data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  orders-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: orders_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - orders-db-data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 networks:
   public:
   internal:
@@ -104,3 +229,6 @@ networks:
 volumes:
   auth-db-data:
   users-db-data:
+  products-db-data:
+  orders-db-data:
+  pdf-data:

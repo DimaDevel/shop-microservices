@@ -17,7 +17,7 @@ interface ProxyRequestOptions {
   headers?: Record<string, string>;
 }
 
-type ServiceName = 'authService' | 'userService';
+type ServiceName = 'authService' | 'userService' | 'productService' | 'orderService';
 
 // ─────────────────────────────────────────────────────────────
 //  ProxyService
@@ -41,6 +41,8 @@ export class ProxyService implements OnModuleInit {
     this.serviceUrls = {
       authService: config.getOrThrow<string>('AUTH_SERVICE_URL'),
       userService: config.getOrThrow<string>('USER_SERVICE_URL'),
+      productService: config.getOrThrow<string>('PRODUCT_SERVICE_URL'),
+      orderService: config.getOrThrow<string>('ORDER_SERVICE_URL'),
     };
   }
 
@@ -78,6 +80,14 @@ export class ProxyService implements OnModuleInit {
 
   async proxyToUsers(options: ProxyRequestOptions) {
     return this.proxy('userService', options);
+  }
+
+  async proxyToProducts(options: ProxyRequestOptions) {
+    return this.proxy('productService', options);
+  }
+
+  async proxyToOrders(options: ProxyRequestOptions) {
+    return this.proxy('orderService', options);
   }
 
   getBreakersStatus() {

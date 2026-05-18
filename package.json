@@ -6,7 +6,7 @@
     "packages/*"
   ],
   "scripts": {
-    "dev": "concurrently --names \"gateway,auth,users\" --prefix-colors \"cyan,yellow,green\" \"npm run start:dev --prefix services/gateway\" \"npm run start:dev --prefix services/auth-service\" \"npm run start:dev --prefix services/user-service\"",
+    "dev": "concurrently --names \"gateway,auth,users,products,orders,pdf,notifications\" --prefix-colors \"cyan,yellow,green,magenta,blue,red,white\" \"npm run start:dev --prefix services/gateway\" \"npm run start:dev --prefix services/auth-service\" \"npm run start:dev --prefix services/user-service\" \"npm run start:dev --prefix services/product-service\" \"npm run start:dev --prefix services/order-service\" \"npm run start:dev --prefix services/pdf-service\" \"npm run start:dev --prefix services/notification-service\"",
     "build": "npm run build --workspaces --if-present",
     "docker:up": "docker-compose up --build",
     "docker:down": "docker-compose down"
