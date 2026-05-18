@@ -33,7 +33,7 @@ export class UserEntity {
   roles: Role[];
 
   @Column({ nullable: true })
-  refreshToken?: string;
+  refreshToken?: string | null;
 
   @Column({ default: true })
   isActive: boolean;

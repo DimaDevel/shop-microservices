@@ -14,10 +14,10 @@ export class ProfileEntity {
   email: string;
 
   @Column({ nullable: true })
-  name?: string;
+  name?: string | null;
 
   @Column({ nullable: true })
-  avatarUrl?: string;
+  avatarUrl?: string | null;
 
   @Column({ default: true })
   isActive: boolean;

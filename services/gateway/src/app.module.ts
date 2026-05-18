@@ -13,7 +13,7 @@ import { HealthModule } from './modules/health/health.module';
 
 @Module({
   imports: [
-    // ConfigModule — загружает .env и делает ConfigService доступным везде
+    // ConfigModule - uploads .env and makes ConfigService available globally
     ConfigModule.forRoot({ isGlobal: true }),
 
     ProxyModule,
@@ -21,41 +21,40 @@ import { HealthModule } from './modules/health/health.module';
     HealthModule,
   ],
   providers: [
-    // ── Global Guards (выполняются в этом порядке) ───────────
+    // -- Global Guards (executed in this order) ----------------------
     //
-    // JwtAuthGuard — первый: проверяет токен.
-    // Если роут помечен @Public() — пропускает без проверки.
+    // JwtAuthGuard — first: checks the token.
+    // If route is marked with @Public() — it allows the request without checking.
     {
       provide: APP_GUARD,
       useClass: JwtAuthGuard,
     },
-    // RolesGuard — второй: проверяет роли из @Roles() метаданных.
-    // Запускается только если JwtAuthGuard пропустил запрос.
+    // RolesGuard — second: checks roles from @Roles() metadata.
+    // Runs only if JwtAuthGuard passed the request (i.e. user is authenticated).
     {
       provide: APP_GUARD,
       useClass: RolesGuard,
     },
-
-    // ── Global Interceptors (выполняются в этом порядке) ─────
+    // -- Global Interceptors (executed in this order) ----------------------
     //
-    // CorrelationIdInterceptor — первый: генерирует/читает ID и добавляет в ответ.
+    // CorralationIdInterceptor — first: generates/reads correlation ID and adds to response.
     {
       provide: APP_INTERCEPTOR,
       useClass: CorrelationIdInterceptor,
     },
-    // LoggingInterceptor — логирует запрос + время ответа.
+    // LoggingInterceptor — second: logs request + response time.
     {
       provide: APP_INTERCEPTOR,
       useClass: LoggingInterceptor,
     },
-    // TimeoutInterceptor — отменяет запрос если сервис не ответил за N секунд.
+    // TimeoutInterceptor — third: cancels request if service did not respond within N seconds.
     {
       provide: APP_INTERCEPTOR,
       useClass: TimeoutInterceptor,
     },
 
     // ── Global Filters ────────────────────────────────────────
-    // Перехватывает все HTTP исключения и форматирует ответ единообразно.
+    // Intercepts all unhandled exceptions and formats the response in a consistent way.
     {
       provide: APP_FILTER,
       useClass: HttpExceptionFilter,
