@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import { AuthModule } from './auth/auth.module';
+import { HealthModule } from './health/health.module';
 import { UserEntity } from './users/user.entity';
 import { InternalGuard } from './guards/internal.guard';
 
@@ -30,6 +31,7 @@ import { InternalGuard } from './guards/internal.guard';
     }),
 
     AuthModule,
+    HealthModule,
   ],
   providers: [
     {

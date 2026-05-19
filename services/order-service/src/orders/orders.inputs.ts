@@ -6,5 +6,6 @@ export interface OrderItemInput {
 export interface CreateOrderInput {
   userId: string;
   userEmail: string;
+  correlationId: string;
   items: OrderItemInput[];
 }

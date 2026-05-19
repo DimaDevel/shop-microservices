@@ -1,6 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { DataSource, Repository } from 'typeorm';
+import { DataSource, EntityManager, Repository } from 'typeorm';
 import { ProductEntity } from './product.entity';
 import { CreateProductInput, UpdateProductInput, ReserveStockInput } from './products.inputs';
 import { ProductResult, ReserveStockResult } from './products.outputs';
@@ -44,9 +44,11 @@ export class ProductsService {
     await this.productsRepo.save(product);
   }
 
-  async reserveStock(input: ReserveStockInput): Promise<ReserveStockResult> {
-    return this.dataSource.transaction(async (manager) => {
-      const repo = manager.getRepository(ProductEntity);
+  // Accepts an external manager so it can participate in the caller's transaction.
+  // Falls back to its own transaction when called from the HTTP endpoint.
+  async reserveStock(input: ReserveStockInput, manager?: EntityManager): Promise<ReserveStockResult> {
+    const run = async (mgr: EntityManager): Promise<ReserveStockResult> => {
+      const repo = mgr.getRepository(ProductEntity);
       const reserved = [];
 
       for (const item of input.items) {
@@ -72,7 +74,20 @@ export class ProductsService {
       }
 
       return { items: reserved };
-    });
+    };
+
+    return manager ? run(manager) : this.dataSource.transaction(run);
+  }
+
+  // Compensation: restore stock after a failed payment.
+  async releaseStock(
+    items: Array<{ productId: string; quantity: number }>,
+    manager: EntityManager,
+  ): Promise<void> {
+    const repo = manager.getRepository(ProductEntity);
+    for (const item of items) {
+      await repo.increment({ id: item.productId }, 'stock', item.quantity);
+    }
   }
 
   private toResult(product: ProductEntity): ProductResult {

@@ -6,37 +6,35 @@ import {
   Param,
   ParseUUIDPipe,
   Headers,
+  HttpCode,
   NotFoundException,
-  BadRequestException,
   UnauthorizedException,
 } from '@nestjs/common';
 import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './orders.dto';
 import { HEADERS } from '@nest-gateway/shared';
-import { OrderNotFoundError, ProductServiceError } from './orders.errors';
+import { OrderNotFoundError } from './orders.errors';
 
 @Controller('orders')
 export class OrdersController {
   constructor(private readonly ordersService: OrdersService) {}
 
   @Post()
+  @HttpCode(202)
   async create(
     @Body() dto: CreateOrderDto,
     @Headers(HEADERS.USER_ID) userId: string,
     @Headers(HEADERS.USER_EMAIL) userEmail: string,
+    @Headers(HEADERS.CORRELATION_ID) correlationId: string,
   ) {
     if (!userId) throw new UnauthorizedException('Missing user id');
 
-    try {
-      return await this.ordersService.create({
-        userId,
-        userEmail,
-        items: dto.items,
-      });
-    } catch (e) {
-      if (e instanceof ProductServiceError) throw new BadRequestException(e.message);
-      throw e;
-    }
+    return this.ordersService.create({
+      userId,
+      userEmail,
+      correlationId: correlationId ?? '',
+      items: dto.items,
+    });
   }
 
   @Get()

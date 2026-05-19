@@ -1,90 +1,44 @@
-import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
-import { ClientKafka } from '@nestjs/microservices';
-import { ConfigService } from '@nestjs/config';
-import { firstValueFrom } from 'rxjs';
-import { OrderEntity } from './order.entity';
+import { DataSource, Repository } from 'typeorm';
+import { OrderEntity, OrderStatus } from './order.entity';
 import { OrderItemEntity } from './order-item.entity';
 import { CreateOrderInput } from './orders.inputs';
 import { OrderResult } from './orders.outputs';
-import { OrderNotFoundError, ProductServiceError } from './orders.errors';
-import { KAFKA_TOPICS, HEADERS, OrderCreatedEvent } from '@nest-gateway/shared';
+import { OrderNotFoundError } from './orders.errors';
+import { SagaService } from './saga.service';
 
 @Injectable()
-export class OrdersService implements OnModuleInit {
-  private readonly logger = new Logger(OrdersService.name);
-
+export class OrdersService {
   constructor(
     @InjectRepository(OrderEntity)
     private readonly ordersRepo: Repository<OrderEntity>,
-    @Inject('KAFKA_CLIENT')
-    private readonly kafkaClient: ClientKafka,
-    private readonly config: ConfigService,
+    private readonly sagaService: SagaService,
+    private readonly dataSource: DataSource,
   ) {}
 
-  async onModuleInit() {
-    await this.kafkaClient.connect();
-  }
-
   async create(input: CreateOrderInput): Promise<OrderResult> {
-    const productServiceUrl = this.config.getOrThrow<string>('PRODUCT_SERVICE_URL');
-    const internalSecret = this.config.getOrThrow<string>('INTERNAL_SECRET');
+    return this.dataSource.transaction(async (manager) => {
+      const order = manager.getRepository(OrderEntity).create({
+        userId: input.userId,
+        userEmail: input.userEmail,
+        total: 0,
+        status: OrderStatus.PENDING,
+        items: input.items.map((item) => {
+          const orderItem = new OrderItemEntity();
+          orderItem.productId = item.productId;
+          orderItem.productName = '';
+          orderItem.quantity = item.quantity;
+          orderItem.unitPrice = 0;
+          return orderItem;
+        }),
+      });
 
-    const reserveResponse = await fetch(`${productServiceUrl}/products/reserve`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        [HEADERS.INTERNAL_SECRET]: internalSecret,
-      },
-      body: JSON.stringify({ items: input.items }),
+      const saved = await manager.getRepository(OrderEntity).save(order);
+      await this.sagaService.startSaga(saved.id, input.items, input.correlationId, manager);
+
+      return this.toResult(saved);
     });
-
-    if (!reserveResponse.ok) {
-      const error = await reserveResponse.json() as { message?: string };
-      throw new ProductServiceError(error.message ?? 'Failed to reserve products');
-    }
-
-    const { items: reservedItems } = await reserveResponse.json() as {
-      items: Array<{ productId: string; name: string; unitPrice: number; quantity: number }>;
-    };
-
-    const total = reservedItems.reduce((sum, item) => sum + item.unitPrice * item.quantity, 0);
-
-    const order = this.ordersRepo.create({
-      userId: input.userId,
-      userEmail: input.userEmail,
-      total,
-      items: reservedItems.map((item) => {
-        const orderItem = new OrderItemEntity();
-        orderItem.productId = item.productId;
-        orderItem.productName = item.name;
-        orderItem.quantity = item.quantity;
-        orderItem.unitPrice = item.unitPrice;
-        return orderItem;
-      }),
-    });
-
-    const saved = await this.ordersRepo.save(order);
-
-    const event: OrderCreatedEvent = {
-      orderId: saved.id,
-      userId: saved.userId,
-      userEmail: saved.userEmail,
-      items: saved.items.map((item) => ({
-        productId: item.productId,
-        name: item.productName,
-        quantity: item.quantity,
-        unitPrice: Number(item.unitPrice),
-      })),
-      total: Number(saved.total),
-      createdAt: saved.createdAt.toISOString(),
-    };
-
-    await firstValueFrom(this.kafkaClient.emit(KAFKA_TOPICS.ORDER_CREATED, event));
-    this.logger.log(`Order created and event emitted: ${saved.id}`);
-
-    return this.toResult(saved);
   }
 
   async findByUser(userId: string): Promise<OrderResult[]> {
@@ -105,7 +59,7 @@ export class OrdersService implements OnModuleInit {
       userEmail: order.userEmail,
       status: order.status,
       total: Number(order.total),
-      items: order.items.map((item) => ({
+      items: (order.items ?? []).map((item) => ({
         id: item.id,
         productId: item.productId,
         productName: item.productName,

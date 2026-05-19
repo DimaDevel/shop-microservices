@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
 import { UsersModule } from './users/users.module';
+import { HealthModule } from './health/health.module';
 import { ProfileEntity } from './users/profile.entity';
 import { InternalGuard } from './guards/internal.guard';
 
@@ -24,6 +25,7 @@ import { InternalGuard } from './guards/internal.guard';
       inject: [ConfigService],
     }),
     UsersModule,
+    HealthModule,
   ],
   providers: [
     {

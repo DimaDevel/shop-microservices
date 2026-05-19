@@ -14,6 +14,22 @@ export enum Role {
 }
 
 export const KAFKA_TOPICS = {
-  ORDER_CREATED: 'order.created',
-  PDF_GENERATED: 'pdf.generated',
+  // Commands: orchestrator → service handlers
+  RESERVE_STOCK: 'orders.reserve-stock',
+  RELEASE_STOCK: 'orders.release-stock',
+  PROCESS_PAYMENT: 'orders.process-payment',
+
+  // Replies: service handlers → orchestrator
+  STOCK_RESERVED: 'orders.stock-reserved',
+  STOCK_RESERVATION_FAILED: 'orders.stock-reservation-failed',
+  STOCK_RELEASED: 'orders.stock-released',
+  PAYMENT_PROCESSED: 'orders.payment-processed',
+  PAYMENT_FAILED: 'orders.payment-failed',
+
+  // Domain events: broadcast to downstream consumers
+  ORDER_CONFIRMED: 'orders.order-confirmed',
+  ORDER_CANCELLED: 'orders.order-cancelled',
+
+  // PDF pipeline (choreography)
+  PDF_GENERATED: 'pdf.pdf-generated',
 } as const;

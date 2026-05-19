@@ -74,6 +74,8 @@ services:
     environment:
       PORT: 3003
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
+      KAFKA_BROKERS: kafka:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       DB_HOST: products-db
       DB_PORT: 5432
       DB_USER: postgres
@@ -84,6 +86,10 @@ services:
     depends_on:
       products-db:
         condition: service_healthy
+      kafka:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
 
   order-service:
     build:
@@ -92,8 +98,8 @@ services:
     environment:
       PORT: 3004
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
-      PRODUCT_SERVICE_URL: http://product-service:3003
       KAFKA_BROKERS: kafka:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       DB_HOST: orders-db
       DB_PORT: 5432
       DB_USER: postgres
@@ -106,6 +112,8 @@ services:
         condition: service_healthy
       kafka:
         condition: service_healthy
+      jaeger:
+        condition: service_started
 
   pdf-service:
     build:
@@ -114,6 +122,7 @@ services:
     environment:
       PORT: 3005
       KAFKA_BROKERS: kafka:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
       PDF_OUTPUT_DIR: /app/pdfs
       NODE_ENV: development
     volumes:
@@ -122,6 +131,8 @@ services:
     depends_on:
       kafka:
         condition: service_healthy
+      jaeger:
+        condition: service_started
 
   notification-service:
     build:
@@ -130,11 +141,54 @@ services:
     environment:
       PORT: 3006
       KAFKA_BROKERS: kafka:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      DB_HOST: notifications-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: notifications_db
       NODE_ENV: development
     networks: [internal]
     depends_on:
+      notifications-db:
+        condition: service_healthy
       kafka:
         condition: service_healthy
+      jaeger:
+        condition: service_started
+
+  payment-service:
+    build:
+      context: .
+      dockerfile: services/payment-service/Dockerfile
+    environment:
+      PORT: 3007
+      INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
+      KAFKA_BROKERS: kafka:9092
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://jaeger:4318/v1/traces
+      DB_HOST: payments-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: ${DB_PASSWORD:-postgres}
+      DB_NAME: payments_db
+      NODE_ENV: development
+    networks: [internal]
+    depends_on:
+      payments-db:
+        condition: service_healthy
+      kafka:
+        condition: service_healthy
+      jaeger:
+        condition: service_started
+
+  # ── Observability ──────────────────────────────────────────────
+  jaeger:
+    image: jaegertracing/all-in-one:1.57
+    environment:
+      COLLECTOR_OTLP_ENABLED: "true"
+    ports:
+      - "16686:16686"
+    networks: [public, internal]
 
   # ── Kafka ──────────────────────────────────────────────────────
   zookeeper:
@@ -222,6 +276,36 @@ services:
       timeout: 5s
       retries: 5
 
+  payments-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: payments_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - payments-db-data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  notifications-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: notifications_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - notifications-db-data:/var/lib/postgresql/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 networks:
   public:
   internal:
@@ -231,4 +315,6 @@ volumes:
   users-db-data:
   products-db-data:
   orders-db-data:
+  payments-db-data:
+  notifications-db-data:
   pdf-data:
