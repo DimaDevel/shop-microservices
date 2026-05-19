@@ -1,7 +1,0 @@
-node_modules/
-
-# Test coverage
-coverage/
-
-# NestJS build info
-.nest/
