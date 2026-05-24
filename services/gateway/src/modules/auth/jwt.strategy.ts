@@ -1,36 +1,45 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, Inject } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
 import { JwtPayload, RequestUser } from '@nest-gateway/shared';
 
-// ─────────────────────────────────────────────────────────────
-//  JwtStrategy
-//
-//  Passport стратегия для проверки JWT.
-//  Вызывается автоматически когда JwtAuthGuard активируется.
-//
-//  validate() получает уже декодированный payload (подпись проверена).
-//  Что возвращает validate() — то и попадает в req.user.
-// ─────────────────────────────────────────────────────────────
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor(config: ConfigService) {
+  constructor(
+    config: ConfigService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {
     super({
-      // Берём токен из заголовка Authorization: Bearer <token>
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
-      // ignoreExpiration: false — истёкшие токены отклоняются
       ignoreExpiration: false,
       secretOrKey: config.getOrThrow<string>('JWT_SECRET'),
     });
   }
 
-  // Payload уже верифицирован — строим объект пользователя
-  validate(payload: JwtPayload): RequestUser {
-    return {
+  async validate(payload: JwtPayload): Promise<RequestUser> {
+    const key = `jwt:${payload.sub}:${payload.iat}`;
+
+    try {
+      const cached = await this.cache.get<RequestUser>(key);
+      if (cached) return cached;
+    } catch { /* Redis unavailable – fall through */ }
+
+    const user: RequestUser = {
       id: payload.sub,
       email: payload.email,
       roles: payload.roles ?? [],
     };
+
+    const ttlMs = ((payload.exp ?? 0) - Math.floor(Date.now() / 1000)) * 1000;
+    if (ttlMs > 0) {
+      try {
+        await this.cache.set(key, user, ttlMs);
+      } catch { /* Redis unavailable – non-fatal, token still valid */ }
+    }
+
+    return user;
   }
 }

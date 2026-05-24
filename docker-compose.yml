@@ -24,8 +24,10 @@ services:
       REQUEST_TIMEOUT_MS: 5000
       NODE_ENV: development
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     networks: [public, internal]
-    depends_on: [auth-service, user-service, product-service, order-service]
+    depends_on: [auth-service, user-service, product-service, order-service, redis]
 
   auth-service:
     build:
@@ -82,6 +84,8 @@ services:
       DB_PASSWORD: ${DB_PASSWORD:-postgres}
       DB_NAME: products_db
       NODE_ENV: development
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     networks: [internal]
     depends_on:
       products-db:
@@ -90,6 +94,8 @@ services:
         condition: service_healthy
       jaeger:
         condition: service_started
+      redis:
+        condition: service_healthy
 
   order-service:
     build:
@@ -180,6 +186,21 @@ services:
         condition: service_healthy
       jaeger:
         condition: service_started
+
+  # ── Cache ──────────────────────────────────────────────────────
+  redis:
+    image: redis:7-alpine
+    command: redis-server --maxmemory 256mb --maxmemory-policy allkeys-lru
+    ports:
+      - "127.0.0.1:6379:6379"
+    volumes:
+      - redis-data:/data
+    networks: [internal]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
 
   # ── Observability ──────────────────────────────────────────────
   jaeger:
@@ -318,3 +339,4 @@ volumes:
   payments-db-data:
   notifications-db-data:
   pdf-data:
+  redis-data:
