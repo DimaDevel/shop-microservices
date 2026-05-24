@@ -3,6 +3,7 @@ import {
   FastifyAdapter,
   NestFastifyApplication,
 } from "@nestjs/platform-fastify";
+import type { IncomingMessage } from "http";
 import { ValidationPipe, Logger } from "@nestjs/common";
 import { AppModule } from "./app.module";
 
@@ -16,7 +17,7 @@ async function bootstrap() {
     new FastifyAdapter({
       logger: true,
       // genReqId генерирует correlation ID если клиент не передал свой
-      genReqId: (req) =>
+      genReqId: (req: IncomingMessage) =>
         (req.headers["x-correlation-id"] as string) ?? crypto.randomUUID(),
     }),
   );
