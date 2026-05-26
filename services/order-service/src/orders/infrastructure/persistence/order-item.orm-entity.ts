@@ -1,20 +1,14 @@
-import {
-  Entity,
-  PrimaryGeneratedColumn,
-  Column,
-  ManyToOne,
-  JoinColumn,
-} from 'typeorm';
-import { OrderEntity } from './order.entity';
+import { Entity, PrimaryGeneratedColumn, Column, ManyToOne, JoinColumn } from 'typeorm';
+import { OrderOrmEntity } from './order.orm-entity';
 
 @Entity('order_items')
-export class OrderItemEntity {
+export class OrderItemOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 
-  @ManyToOne(() => OrderEntity, (order) => order.items, { onDelete: 'CASCADE' })
+  @ManyToOne(() => OrderOrmEntity, (order) => order.items, { onDelete: 'CASCADE' })
   @JoinColumn({ name: 'orderId' })
-  order: OrderEntity;
+  order: OrderOrmEntity;
 
   @Column()
   orderId: string;

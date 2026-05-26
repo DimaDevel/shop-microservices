@@ -5,10 +5,10 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
 import { KafkaModule } from '@nest-gateway/kafka';
 import { OrdersModule } from './orders/orders.module';
-import { OrderEntity } from './orders/order.entity';
-import { OrderItemEntity } from './orders/order-item.entity';
-import { OutboxEntity } from './orders/outbox.entity';
-import { SagaStateEntity } from './orders/saga-state.entity';
+import { OrderOrmEntity } from './orders/infrastructure/persistence/order.orm-entity';
+import { OrderItemOrmEntity } from './orders/infrastructure/persistence/order-item.orm-entity';
+import { OutboxOrmEntity } from './orders/infrastructure/persistence/outbox.orm-entity';
+import { SagaStateOrmEntity } from './orders/infrastructure/persistence/saga-state.orm-entity';
 import { HealthModule } from './health/health.module';
 import { InternalGuard } from './guards/internal.guard';
 
@@ -25,7 +25,7 @@ import { InternalGuard } from './guards/internal.guard';
         username: config.get('DB_USER', 'postgres'),
         password: config.get('DB_PASSWORD', 'postgres'),
         database: config.get('DB_NAME', 'orders_db'),
-        entities: [OrderEntity, OrderItemEntity, OutboxEntity, SagaStateEntity],
+        entities: [OrderOrmEntity, OrderItemOrmEntity, OutboxOrmEntity, SagaStateOrmEntity],
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') !== 'production',
       }),

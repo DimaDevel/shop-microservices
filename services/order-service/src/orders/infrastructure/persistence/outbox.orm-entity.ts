@@ -7,7 +7,7 @@ export enum OutboxStatus {
 }
 
 @Entity('outbox')
-export class OutboxEntity {
+export class OutboxOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

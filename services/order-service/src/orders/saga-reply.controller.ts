@@ -1,6 +1,7 @@
 import { Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { KafkaConsumerService, KafkaEnvelope } from '@nest-gateway/kafka';
-import { SagaService } from './saga.service';
+import { SagaOrchestrator } from './application/services/saga-orchestrator.service';
+import { OrderNotFoundError } from './domain/errors/orders.errors';
 import {
   KAFKA_TOPICS,
   StockReservedEvent,
@@ -15,19 +16,16 @@ export class SagaReplyController implements OnModuleInit {
   private readonly logger = new Logger(SagaReplyController.name);
 
   constructor(
-    private readonly sagaService: SagaService,
+    private readonly sagaOrchestrator: SagaOrchestrator,
     private readonly kafkaConsumer: KafkaConsumerService,
   ) {}
 
   onModuleInit(): void {
-    // Idempotency for all reply handlers is enforced by SagaService: each handler
-    // checks saga.currentStep before acting, so a replayed Kafka event that arrives
-    // after the saga has already advanced is silently dropped.
     this.kafkaConsumer.subscribe<StockReservedEvent>({
       topic: KAFKA_TOPICS.STOCK_RESERVED,
       handler: async (e: KafkaEnvelope<StockReservedEvent>) => {
         this.logger.log(`[${e.correlationId}] Stock reserved for order ${e.payload.orderId}`);
-        await this.sagaService.onStockReserved(e.payload);
+        await this.handle(e.correlationId, () => this.sagaOrchestrator.onStockReserved(e.payload));
       },
     });
 
@@ -35,7 +33,7 @@ export class SagaReplyController implements OnModuleInit {
       topic: KAFKA_TOPICS.STOCK_RESERVATION_FAILED,
       handler: async (e: KafkaEnvelope<StockReservationFailedEvent>) => {
         this.logger.warn(`[${e.correlationId}] Stock reservation failed for order ${e.payload.orderId}`);
-        await this.sagaService.onStockReservationFailed(e.payload);
+        await this.handle(e.correlationId, () => this.sagaOrchestrator.onStockReservationFailed(e.payload));
       },
     });
 
@@ -43,7 +41,7 @@ export class SagaReplyController implements OnModuleInit {
       topic: KAFKA_TOPICS.PAYMENT_PROCESSED,
       handler: async (e: KafkaEnvelope<PaymentProcessedEvent>) => {
         this.logger.log(`[${e.correlationId}] Payment processed for order ${e.payload.orderId}`);
-        await this.sagaService.onPaymentProcessed(e.payload);
+        await this.handle(e.correlationId, () => this.sagaOrchestrator.onPaymentProcessed(e.payload));
       },
     });
 
@@ -51,7 +49,7 @@ export class SagaReplyController implements OnModuleInit {
       topic: KAFKA_TOPICS.PAYMENT_FAILED,
       handler: async (e: KafkaEnvelope<PaymentFailedEvent>) => {
         this.logger.warn(`[${e.correlationId}] Payment failed for order ${e.payload.orderId}`);
-        await this.sagaService.onPaymentFailed(e.payload);
+        await this.handle(e.correlationId, () => this.sagaOrchestrator.onPaymentFailed(e.payload));
       },
     });
 
@@ -59,8 +57,21 @@ export class SagaReplyController implements OnModuleInit {
       topic: KAFKA_TOPICS.STOCK_RELEASED,
       handler: async (e: KafkaEnvelope<StockReleasedEvent>) => {
         this.logger.log(`[${e.correlationId}] Stock released for order ${e.payload.orderId}`);
-        await this.sagaService.onStockReleased(e.payload);
+        await this.handle(e.correlationId, () => this.sagaOrchestrator.onStockReleased(e.payload));
       },
     });
+  }
+
+  private async handle(correlationId: string, fn: () => Promise<void>): Promise<void> {
+    try {
+      await fn();
+    } catch (err) {
+      if (err instanceof OrderNotFoundError) {
+        // Order was deleted mid-saga — non-retriable, acknowledge and discard
+        this.logger.warn(`[${correlationId}] ${(err as Error).message} — skipping event`);
+        return;
+      }
+      throw err;
+    }
   }
 }

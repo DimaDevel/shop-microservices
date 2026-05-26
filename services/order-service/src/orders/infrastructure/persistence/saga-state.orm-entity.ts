@@ -1,21 +1,8 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn, UpdateDateColumn } from 'typeorm';
-
-export enum SagaStep {
-  RESERVE_STOCK = 'reserve_stock',
-  PROCESS_PAYMENT = 'process_payment',
-  RELEASE_STOCK = 'release_stock',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
-
-export enum SagaStatus {
-  RUNNING = 'running',
-  COMPLETED = 'completed',
-  FAILED = 'failed',
-}
+import { SagaStep, SagaStatus } from '../../domain/entities/saga';
 
 @Entity('saga_states')
-export class SagaStateEntity {
+export class SagaStateOrmEntity {
   @PrimaryGeneratedColumn('uuid')
   id: string;
 

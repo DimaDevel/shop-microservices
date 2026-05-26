@@ -14,7 +14,7 @@ npm run dev
 # Build all workspaces
 npm run build
 
-# Docker (recommended for full stack with DBs)
+# Docker (recommended for full stack with DBs, Kafka, and Redis)
 cp .env.example .env   # set JWT_SECRET, JWT_REFRESH_SECRET, DB_PASSWORD
 docker-compose up --build
 docker-compose down
@@ -23,9 +23,15 @@ docker-compose down
 npm run start:dev --prefix services/gateway
 npm run start:dev --prefix services/auth-service
 npm run start:dev --prefix services/user-service
+npm run start:dev --prefix services/product-service
+npm run start:dev --prefix services/order-service
+npm run start:dev --prefix services/payment-service
+npm run start:dev --prefix services/pdf-service
+npm run start:dev --prefix services/notification-service
 
-# Build a single service
-npm run build --prefix services/gateway
+# Run tests
+npm test --prefix services/order-service         # single service
+npm run test:cov --prefix services/auth-service  # with coverage
 ```
 
 Required env vars for local dev (services read from process.env via ConfigService):
@@ -36,28 +42,69 @@ Required env vars for local dev (services read from process.env via ConfigServic
 - `JWT_REFRESH_EXPIRES_IN` — refresh token lifetime in seconds (default: `604800`)
 - `INTERNAL_SECRET` — shared secret sent by gateway in `x-internal-secret` header; required by auth-service and user-service `InternalGuard`
 - `DB_PASSWORD` — PostgreSQL password (default: `postgres`)
-- `AUTH_SERVICE_URL` / `USER_SERVICE_URL` — gateway points to these (defaults set in docker-compose)
+- `AUTH_SERVICE_URL` / `USER_SERVICE_URL` / `PRODUCT_SERVICE_URL` / `ORDER_SERVICE_URL` — gateway points to these (defaults set in docker-compose)
+- `KAFKA_BROKERS` — comma-separated broker list (default: `localhost:9092`); used by order-service, product-service, payment-service, pdf-service, notification-service
+- `REDIS_HOST` / `REDIS_PORT` — used by gateway (token cache) and product-service (cache); defaults `localhost` / `6379`
+- `OUTBOX_MAX_RETRIES` — max Kafka publish attempts for the transactional outbox (default: `5`)
+- `PDF_OUTPUT_DIR` — directory where pdf-service writes generated PDFs (default: `<cwd>/pdfs`)
+- `REQUEST_TIMEOUT_MS` — gateway per-request timeout in ms (default: `5000`)
 
 ## Architecture
 
-This is an **npm workspaces monorepo** with three NestJS services and one shared package:
+This is an **npm workspaces monorepo** with eight NestJS services and one shared package:
 
 ```
-packages/shared/          ← @nest-gateway/shared — shared types, decorators, constants
-services/gateway/         ← Public entry point (port 3000), NestJS + Fastify
-services/auth-service/    ← Auth logic + JWT issuance (port 3001), has own PostgreSQL
-services/user-service/    ← User profiles (port 3002), has own PostgreSQL
-nginx/                    ← Rate limiting (10r/m on /auth/*, 100r/m global), SSL termination
+packages/shared/               ← @nest-gateway/shared — shared types, decorators, constants, Kafka topics
+services/gateway/              ← Public entry point (port 3000), NestJS + Fastify
+services/auth-service/         ← Auth logic + JWT issuance (port 3001), PostgreSQL: auth_db
+services/user-service/         ← User profiles (port 3002), PostgreSQL: users_db
+services/product-service/      ← Product catalog + stock management (port 3003), PostgreSQL + Redis cache
+services/order-service/        ← Order management + saga orchestration (port 3004), PostgreSQL
+services/pdf-service/          ← PDF generation (port 3005), stateless Kafka consumer
+services/notification-service/ ← Email/notification dispatch (port 3006), PostgreSQL
+services/payment-service/      ← Payment processing (port 3007), PostgreSQL
+nginx/                         ← Rate limiting (10r/m on /auth/*, 100r/m global), SSL termination
 ```
 
 ### Request flow
 
 ```
-Client → Nginx → Gateway → auth-service (PostgreSQL: auth_db)
-                         → user-service (PostgreSQL: users_db)
+Client → Nginx → Gateway → auth-service    (PostgreSQL: auth_db)
+                         → user-service    (PostgreSQL: users_db)
+                         → product-service (PostgreSQL: products_db, Redis cache)
+                         → order-service   (PostgreSQL: orders_db, Kafka producer)
+
+Order saga (Kafka):
+  order-service ──[reserve-stock]──► product-service ──[stock-reserved/failed]──► order-service
+                ──[process-payment]─► payment-service ──[payment-processed/failed]► order-service
+                ──[order-confirmed]─► pdf-service ──[pdf-generated]──► notification-service
+                ──[order-cancelled]─► notification-service
 ```
 
 The gateway is the **only** service exposed publicly. Downstream services live on the `internal` Docker network.
+
+### Kafka topics (defined in `packages/shared/src/constants/index.ts`)
+
+Commands (orchestrator → participant):
+- `orders.reserve-stock` / `orders.release-stock` — order-service → product-service
+- `orders.process-payment` — order-service → payment-service
+
+Replies (participant → orchestrator):
+- `orders.stock-reserved` / `orders.stock-reservation-failed` / `orders.stock-released` — product-service → order-service
+- `orders.payment-processed` / `orders.payment-failed` — payment-service → order-service
+
+Domain events (broadcast):
+- `orders.order-confirmed` / `orders.order-cancelled` — order-service → pdf-service, notification-service
+- `pdf.pdf-generated` — pdf-service → notification-service
+
+### Transactional outbox pattern
+
+order-service, product-service, and payment-service guarantee at-least-once Kafka delivery via an outbox:
+1. Business logic and an outbox record are written **in the same DB transaction**
+2. `OutboxProcessorService` polls pending records and publishes them to Kafka
+3. Published records are marked `sent=true`; retries are capped by `OUTBOX_MAX_RETRIES`
+
+product-service and payment-service also maintain an **idempotency table** to deduplicate redelivered commands.
 
 ### Gateway middleware stack (execution order)
 
@@ -72,9 +119,9 @@ All registered globally in `services/gateway/src/app.module.ts`:
 JWT tokens are **only parsed in the gateway** (`JwtStrategy` → `req.user: RequestUser`). Downstream services never see or verify JWTs. Instead, the gateway enriches every proxied request with trusted headers (defined in `packages/shared/src/constants/index.ts`):
 
 ```
-x-user-id     → user.id
-x-user-email  → user.email
-x-roles       → comma-separated roles (e.g. "user,admin")
+x-user-id        → user.id
+x-user-email     → user.email
+x-roles          → comma-separated roles (e.g. "user,admin")
 x-correlation-id → trace ID for log correlation
 ```
 
@@ -100,11 +147,11 @@ Auth-service uses a **refresh token rotation** pattern: the current refresh toke
 
 ### Shared package (`@nest-gateway/shared`)
 
-Imported by all three services. Contains:
+Imported by all services. Contains:
 
 - **Decorators**: `@Public()` (skip JWT guard), `@Roles(...Role[])` (role requirement), `@CurrentUser()` (param decorator for `req.user`)
-- **Interfaces**: `JwtPayload`, `RequestUser`, `ApiError`
-- **Constants**: `HEADERS` object (canonical header names), `Role` enum (`user | admin | moderator`)
+- **Interfaces**: `JwtPayload`, `RequestUser`, `ApiError`, Kafka command/event payload types
+- **Constants**: `HEADERS` object (canonical header names), `Role` enum (`user | admin | moderator`), `KAFKA_TOPICS`
 
 When adding a new route: mark public endpoints with `@Public()`, restrict by role with `@Roles(Role.ADMIN)`, and access the authenticated user with `@CurrentUser() user: RequestUser`.
 
@@ -117,29 +164,39 @@ The gateway uses `ValidationPipe({ whitelist: true, transform: true, forbidNonWh
 This project follows Clean Architecture. The Dependency Rule applies: **source code dependencies must point inward only**.
 
 ```
-Frameworks & Drivers  (NestJS, Fastify, TypeORM, PostgreSQL)
-Interface Adapters    (Controllers, DTOs, entity mappers)
-Use Cases             (Services, service-layer input/output types)
-Entities              (Domain entities, shared types)
+Frameworks & Drivers  (NestJS, Fastify, TypeORM, KafkaJS, PostgreSQL)
+Interface Adapters    (Controllers, DTOs, entity mappers, Kafka consumers)
+Use Cases             (Use-case classes, application services, input/output types)
+Entities              (Domain entities, errors, repository interfaces)
 ```
 
-Rules to follow when adding code:
+Canonical folder layout (exemplified by order-service):
 
-- **DTOs belong to the Interface Adapter layer.** They may carry `class-validator`/`class-transformer` decorators and are shaped around transport concerns (HTTP request bodies). Never import a DTO inside a service.
-- **Services define their own input types** (plain interfaces in `*.inputs.ts`). Controllers map DTOs → service inputs; the service never knows the DTO exists.
-- **Services are transport-agnostic.** A service method must be callable from an HTTP controller, a gRPC handler, a CLI command, or a test without constructing an HTTP DTO.
-- **Entities are the innermost layer.** They must not import from services, controllers, or DTOs.
-- **Services throw domain errors** (plain classes extending `Error`, defined in `*.errors.ts`). HTTP exceptions (`UnauthorizedException`, etc.) belong in the controller — never in the service.
-- **Services return plain interfaces** defined in `*.outputs.ts`, never DTOs or TypeORM entities. Controllers receive the interface and pass it through to the response directly.
+```
+src/orders/
+  domain/
+    entities/     ← pure domain objects (Order, Saga, OrderItem)
+    errors/       ← domain error classes extending Error
+    repositories/ ← repository interfaces (no TypeORM imports)
+  application/
+    use-cases/    ← one class per use case, orchestrates domain + repositories
+    services/     ← saga orchestrator and other application-level services
+  infrastructure/
+    persistence/  ← TypeORM ORM entities, mappers, repository implementations
+  orders.module.ts
+```
+
+Rules:
+
+- **DTOs belong to the Interface Adapter layer.** They carry `class-validator`/`class-transformer` decorators; never import a DTO inside a service.
+- **Services define their own input types** (plain interfaces). Controllers map DTOs → inputs; the service never knows the DTO exists.
+- **Entities are the innermost layer.** Must not import from services, controllers, or DTOs.
+- **Services throw domain errors** (`*.errors.ts`). HTTP exceptions belong in the controller — never in the service.
+- **Services return plain interfaces** (`*.outputs.ts`), never DTOs or TypeORM entities.
 
 ## Promise.all vs Promise.allSettled
 
-- **`Promise.all`** — use when all operations must succeed together. Fails fast on the first rejection; the result is meaningless without every value. Example: signing access and refresh tokens — if either fails, the whole token issuance fails.
-- **`Promise.allSettled`** — use when operations are independent and partial success is useful. Always resolves; each result has a `status` field (`'fulfilled'` | `'rejected'`) that must be explicitly checked. Example: sending notifications over multiple channels — a failed email should not cancel a Slack alert.
-
-**Pitfalls:**
-- `Promise.all` — rejected promises keep running silently; swallowing the error loses visibility into what else failed.
-- `Promise.allSettled` — always resolves, so forgetting to check each `status` silently swallows errors.
+Use `Promise.all` when all operations must succeed together (fail fast on first rejection). Use `Promise.allSettled` when operations are independent and partial success is useful — but always check each result's `status` field explicitly, since `Promise.allSettled` always resolves regardless of failures.
 
 # Compact instructions
 

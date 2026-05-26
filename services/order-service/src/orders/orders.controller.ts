@@ -10,14 +10,20 @@ import {
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { OrdersService } from './orders.service';
 import { CreateOrderDto } from './orders.dto';
 import { HEADERS } from '@nest-gateway/shared';
-import { OrderNotFoundError } from './orders.errors';
+import { CreateOrderUseCase } from './application/use-cases/create-order.use-case';
+import { GetOrderUseCase } from './application/use-cases/get-order.use-case';
+import { GetUserOrdersUseCase } from './application/use-cases/get-user-orders.use-case';
+import { OrderNotFoundError } from './domain/errors/orders.errors';
 
 @Controller('orders')
 export class OrdersController {
-  constructor(private readonly ordersService: OrdersService) {}
+  constructor(
+    private readonly createOrderUseCase: CreateOrderUseCase,
+    private readonly getOrderUseCase: GetOrderUseCase,
+    private readonly getUserOrdersUseCase: GetUserOrdersUseCase,
+  ) {}
 
   @Post()
   @HttpCode(202)
@@ -28,19 +34,13 @@ export class OrdersController {
     @Headers(HEADERS.CORRELATION_ID) correlationId: string,
   ) {
     if (!userId) throw new UnauthorizedException('Missing user id');
-
-    return this.ordersService.create({
-      userId,
-      userEmail,
-      correlationId: correlationId ?? '',
-      items: dto.items,
-    });
+    return this.createOrderUseCase.execute({ userId, userEmail, correlationId: correlationId ?? '', items: dto.items });
   }
 
   @Get()
   findAll(@Headers(HEADERS.USER_ID) userId: string) {
     if (!userId) throw new UnauthorizedException('Missing user id');
-    return this.ordersService.findByUser(userId);
+    return this.getUserOrdersUseCase.execute(userId);
   }
 
   @Get(':id')
@@ -49,9 +49,8 @@ export class OrdersController {
     @Headers(HEADERS.USER_ID) userId: string,
   ) {
     if (!userId) throw new UnauthorizedException('Missing user id');
-
     try {
-      return await this.ordersService.findById(id, userId);
+      return await this.getOrderUseCase.execute(id, userId);
     } catch (e) {
       if (e instanceof OrderNotFoundError) throw new NotFoundException(e.message);
       throw e;

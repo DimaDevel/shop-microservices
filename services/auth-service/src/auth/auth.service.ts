@@ -100,13 +100,20 @@ export class AuthService {
     const accessExpiresIn = this.config.getOrThrow<number>('JWT_ACCESS_EXPIRES_IN', 3600);
     const refreshExpiresIn = this.config.getOrThrow<number>('JWT_REFRESH_EXPIRES_IN', 604800);
 
-    const [accessToken, refreshToken] = await Promise.all([
-      this.jwtService.signAsync(payload),
-      this.jwtService.signAsync(payload, {
-        secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
-        expiresIn: refreshExpiresIn,
-      }),
-    ]);
+    let accessToken: string;
+    let refreshToken: string;
+    try {
+      [accessToken, refreshToken] = await Promise.all([
+        this.jwtService.signAsync(payload),
+        this.jwtService.signAsync(payload, {
+          secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
+          expiresIn: refreshExpiresIn,
+        }),
+      ]);
+    } catch (err) {
+      this.logger.error(`Failed to sign tokens for user ${user.id}: ${(err as Error).message}`);
+      throw err;
+    }
 
     await this.usersRepo.update(user.id, { refreshToken: this.hashToken(refreshToken) });
 

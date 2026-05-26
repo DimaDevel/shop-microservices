@@ -111,6 +111,17 @@ describe('AuthService', () => {
       await expect(service.register({ email: 'test@example.com', password: 'pass1234' }))
         .rejects.toThrow(EmailAlreadyTakenError);
     });
+
+    it('rethrows when JWT signing fails', async () => {
+      const user = makeUser();
+      usersRepo.findOne.mockResolvedValue(null);
+      usersRepo.create.mockReturnValue(user);
+      usersRepo.save.mockResolvedValue(user);
+      (jwtService.signAsync as jest.Mock).mockRejectedValue(new Error('jwt lib error'));
+
+      await expect(service.register({ email: 'test@example.com', password: 'pass1234' }))
+        .rejects.toThrow('jwt lib error');
+    });
   });
 
   describe('login', () => {
