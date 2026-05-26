@@ -2,7 +2,7 @@ import { Transform } from 'class-transformer';
 import { IsEmail, IsString, MinLength, MaxLength } from 'class-validator';
 
 // ─────────────────────────────────────────────────────────────
-//  DTO с class-validator
+//  DTOs with class-validator
 // ValidationPipe automatically validates incoming requests.
 // If a field fails validation — 400 Bad Request with details.
 // ─────────────────────────────────────────────────────────────

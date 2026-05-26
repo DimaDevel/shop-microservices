@@ -1,4 +1,4 @@
-// Заголовки которые Gateway прокидывает в сервисы
+// Headers forwarded by the Gateway to downstream services
 export const HEADERS = {
   CORRELATION_ID: 'x-correlation-id',
   USER_ID: 'x-user-id',

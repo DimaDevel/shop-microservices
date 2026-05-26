@@ -22,13 +22,13 @@ type ServiceName = 'authService' | 'userService' | 'productService' | 'orderServ
 // ─────────────────────────────────────────────────────────────
 //  ProxyService
 //
-//  Центральный сервис для проксирования запросов к микросервисам.
-//  Каждый downstream сервис обёрнут в Circuit Breaker (opossum).
+//  Central service for proxying requests to microservices.
+//  Each downstream service is wrapped in a Circuit Breaker (opossum).
 //
-//  Отвечает за:
-//  - Обогащение заголовков (x-user-id, x-roles, x-correlation-id)
-//  - Circuit breaker логику
-//  - Единообразную обработку ошибок от downstream сервисов
+//  Responsible for:
+//  - Enriching request headers (x-user-id, x-roles, x-correlation-id)
+//  - Circuit breaker logic
+//  - Uniform error handling from downstream services
 // ─────────────────────────────────────────────────────────────
 @Injectable()
 export class ProxyService implements OnModuleInit {
@@ -47,7 +47,7 @@ export class ProxyService implements OnModuleInit {
   }
 
   onModuleInit() {
-    // Инициализируем circuit breaker для каждого сервиса
+    // Initialise a circuit breaker for each service
     for (const [name, _url] of Object.entries(this.serviceUrls)) {
       const breaker = new CircuitBreaker(
         async (fn: () => Promise<Response>) => fn(),

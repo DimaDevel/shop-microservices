@@ -11,7 +11,7 @@ import { InternalGuard } from './guards/internal.guard';
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
 
-    // TypeORM — подключение к PostgreSQL
+    // TypeORM — PostgreSQL connection
     TypeOrmModule.forRootAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -22,8 +22,8 @@ import { InternalGuard } from './guards/internal.guard';
         password: config.get('DB_PASSWORD', 'postgres'),
         database: config.get('DB_NAME', 'auth_db'),
         entities: [UserEntity],
-        // synchronize: true только для разработки!
-        // В продакшне используй TypeORM migrations
+        // synchronize: true for development only!
+        // Use TypeORM migrations in production
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') !== 'production',
       }),

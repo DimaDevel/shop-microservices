@@ -12,20 +12,20 @@ async function bootstrap() {
 
   const app = await NestFactory.create<NestFastifyApplication>(
     AppModule,
-    // NestJS поддерживает Fastify как альтернативу Express
-    // Fastify быстрее и лучше подходит для Gateway
+    // NestJS supports Fastify as an alternative to Express
+    // Fastify is faster and better suited for a Gateway
     new FastifyAdapter({
       logger: true,
-      // genReqId генерирует correlation ID если клиент не передал свой
+      // genReqId generates a correlation ID if the client did not provide one
       genReqId: (req: IncomingMessage) =>
         (req.headers["x-correlation-id"] as string) ?? crypto.randomUUID(),
     }),
   );
 
   // ── GlobalPipes ────────────────────────────────────────────
-  // ValidationPipe валидирует все входящие DTO автоматически.
-  // whitelist: true — срезает поля которых нет в DTO (защита от лишних данных)
-  // transform: true — преобразует plain objects в инстансы классов
+  // ValidationPipe validates all incoming DTOs automatically.
+  // whitelist: true — strips fields not declared in the DTO (protects against extra data)
+  // transform: true — converts plain objects into class instances
   app.useGlobalPipes(
     new ValidationPipe({
       whitelist: true,

@@ -11,11 +11,11 @@ import { FastifyReply, FastifyRequest } from 'fastify';
 // ─────────────────────────────────────────────────────────────
 //  HttpExceptionFilter
 //
-//  Перехватывает ВСЕ HTTP исключения (и обычные Error тоже)
-//  и форматирует их в единый формат ответа.
+//  Catches ALL HTTP exceptions (including plain Error instances)
+//  and formats them into a consistent response shape.
 //
-//  Без фильтра NestJS возвращает разные форматы для разных ошибок.
-//  С фильтром — всегда один формат:
+//  Without the filter NestJS returns different shapes for different errors.
+//  With the filter — always one shape:
 //  {
 //    statusCode: 401,
 //    code: "UNAUTHORIZED",
@@ -43,7 +43,7 @@ export class HttpExceptionFilter implements ExceptionFilter {
         ? this.extractMessage(exception)
         : 'Internal server error';
 
-    // Не логируем стек для клиентских ошибок (4xx)
+    // Skip stack trace logging for client errors (4xx)
     if (statusCode >= 500) {
       this.logger.error(
         `${request.method} ${request.url} → ${statusCode}`,

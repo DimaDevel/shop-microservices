@@ -10,13 +10,13 @@ import { ROLES_KEY, Role, RequestUser } from '@nest-gateway/shared';
 // ─────────────────────────────────────────────────────────────
 //  RolesGuard
 //
-//  Работает в паре с @Roles(...roles) декоратором.
-//  Запускается ПОСЛЕ JwtAuthGuard — значит req.user уже есть.
+//  Works in tandem with the @Roles(...roles) decorator.
+//  Runs AFTER JwtAuthGuard — req.user is already populated.
 //
-//  Если роут не помечен @Roles() — пропускает всех.
-//  Если помечен — проверяет есть ли нужная роль у юзера.
+//  If a route has no @Roles() metadata — allows all authenticated users.
+//  If it does — verifies the user has the required role.
 //
-//  Пример:
+//  Example:
 //    @Roles(Role.ADMIN)
 //    @Get('admin/stats')
 //    getStats() { ... }
@@ -31,7 +31,7 @@ export class RolesGuard implements CanActivate {
       context.getClass(),
     ]);
 
-    // Нет метаданных @Roles() — роут доступен всем аутентифицированным
+    // No @Roles() metadata — route is open to all authenticated users
     if (!requiredRoles || requiredRoles.length === 0) {
       return true;
     }

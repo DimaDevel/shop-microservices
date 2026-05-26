@@ -6,7 +6,7 @@ import {
 
 @Entity('profiles')
 export class ProfileEntity {
-  // id совпадает с user.id из Auth Service (не генерируем сами)
+  // id matches user.id from Auth Service (not generated here)
   @PrimaryColumn('uuid')
   id: string;
 

@@ -11,11 +11,11 @@ import { HEADERS } from '@nest-gateway/shared';
 // ─────────────────────────────────────────────────────────────
 //  CorrelationIdInterceptor
 //
-//  Читает x-correlation-id из входящего запроса или генерирует новый.
-//  Добавляет его в заголовок ответа — клиент может трейсить свой запрос.
+//  Reads x-correlation-id from the incoming request or generates a new one.
+//  Attaches it to the response header so clients can trace their request.
 //
-//  Correlation ID затем прокидывается в сервисы через ProxyService,
-//  поэтому один ID виден во всех логах всей системы.
+//  The correlation ID is forwarded to downstream services via ProxyService,
+//  so a single ID is visible across all logs in the system.
 // ─────────────────────────────────────────────────────────────
 @Injectable()
 export class CorrelationIdInterceptor implements NestInterceptor {
@@ -23,16 +23,16 @@ export class CorrelationIdInterceptor implements NestInterceptor {
     const request = context.switchToHttp().getRequest();
     const response = context.switchToHttp().getResponse();
 
-    // Берём из входящего запроса или генерируем
+    // Use value from incoming request or generate a new one
     const correlationId =
       request.headers[HEADERS.CORRELATION_ID] ?? crypto.randomUUID();
 
-    // Кладём на request — доступно во всех handler-ах
+    // Attach to request — available in all handlers
     request.correlationId = correlationId;
 
     return next.handle().pipe(
       tap(() => {
-        // Добавляем в ответ — клиент видит ID своего запроса
+        // Attach to response — client can trace their own request
         response.header(HEADERS.CORRELATION_ID, correlationId);
       }),
     );

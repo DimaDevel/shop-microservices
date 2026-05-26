@@ -15,16 +15,16 @@ import { ProxyService } from './proxy.service';
 // ─────────────────────────────────────────────────────────────
 //  UsersProxyController
 //
-//  Защищённые маршруты — JwtAuthGuard применяется глобально.
-//  Демонстрирует использование:
-//    @CurrentUser() — получить данные юзера из req.user
-//    @Roles()       — ограничить доступ по роли
+//  Protected routes — JwtAuthGuard is applied globally.
+//  Demonstrates usage of:
+//    @CurrentUser() — retrieve user data from req.user
+//    @Roles()       — restrict access by role
 // ─────────────────────────────────────────────────────────────
 @Controller('users')
 export class UsersProxyController {
   constructor(private readonly proxy: ProxyService) {}
 
-  // Любой аутентифицированный пользователь
+  // Any authenticated user
   @Get(':id')
   async getUser(
     @Param('id') id: string,
@@ -42,7 +42,7 @@ export class UsersProxyController {
     return res.status(status).send(data);
   }
 
-  // Только владелец аккаунта или admin
+  // Account owner or admin only
   @Patch(':id')
   async updateUser(
     @Param('id') id: string,
@@ -62,7 +62,7 @@ export class UsersProxyController {
     return res.status(status).send(data);
   }
 
-  // Только ADMIN — пример @Roles() декоратора
+  // ADMIN only — example of @Roles() decorator
   @Delete(':id')
   @Roles(Role.ADMIN)
   async deleteUser(

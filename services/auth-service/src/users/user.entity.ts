@@ -10,8 +10,8 @@ import { Role } from '@nest-gateway/shared';
 // ─────────────────────────────────────────────────────────────
 //  UserEntity
 //
-//  Хранит только данные необходимые для аутентификации.
-//  Бизнес-данные (имя, аватар, настройки) — в User Service.
+//  Stores only data required for authentication.
+//  Business data (name, avatar, settings) lives in User Service.
 // ─────────────────────────────────────────────────────────────
 @Entity('users')
 export class UserEntity {

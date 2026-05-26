@@ -4,9 +4,9 @@ import { RequestUser } from '../interfaces';
 
 // ─────────────────────────────────────────────────────────────
 //  @CurrentUser()
-//  Param decorator — вытаскивает req.user в параметр метода
+//  Param decorator — extracts req.user into a method parameter
 //
-//  Использование:
+//  Usage:
 //    async getProfile(@CurrentUser() user: RequestUser) { ... }
 // ─────────────────────────────────────────────────────────────
 export const CurrentUser = createParamDecorator(
@@ -18,9 +18,9 @@ export const CurrentUser = createParamDecorator(
 
 // ─────────────────────────────────────────────────────────────
 //  @Roles(...roles)
-//  Metadata decorator — используется совместно с RolesGuard
+//  Metadata decorator — used together with RolesGuard
 //
-//  Использование:
+//  Usage:
 //    @Roles(Role.ADMIN)
 //    async deleteUser() { ... }
 // ─────────────────────────────────────────────────────────────
@@ -29,9 +29,9 @@ export const Roles = (...roles: Role[]) => SetMetadata(ROLES_KEY, roles);
 
 // ─────────────────────────────────────────────────────────────
 //  @Public()
-//  Помечает роут как публичный — JwtAuthGuard его пропустит
+//  Marks a route as public — JwtAuthGuard will skip it
 //
-//  Использование:
+//  Usage:
 //    @Public()
 //    @Post('login')
 //    async login() { ... }

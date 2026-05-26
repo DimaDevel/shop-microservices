@@ -11,11 +11,11 @@ import { catchError, timeout } from 'rxjs/operators';
 // ─────────────────────────────────────────────────────────────
 //  TimeoutInterceptor
 //
-//  Если downstream сервис не ответил за TIMEOUT_MS —
-//  отменяем запрос и возвращаем 408 Request Timeout.
+//  If a downstream service does not respond within TIMEOUT_MS —
+//  the request is cancelled and 408 Request Timeout is returned.
 //
-//  Без этого один зависший сервис может заблокировать
-//  все event loop workers в Node.js.
+//  Without this, one hung service can block
+//  all event loop workers in Node.js.
 // ─────────────────────────────────────────────────────────────
 const TIMEOUT_MS = Number(process.env.REQUEST_TIMEOUT_MS ?? 5000);
 

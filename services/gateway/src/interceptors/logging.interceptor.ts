@@ -11,10 +11,10 @@ import { tap } from 'rxjs/operators';
 // ─────────────────────────────────────────────────────────────
 //  LoggingInterceptor
 //
-//  Логирует каждый запрос: метод, путь, статус, время ответа.
-//  Correlation ID автоматически есть в контексте (из предыдущего interceptor).
+//  Logs every request: method, path, status code, and response time.
+//  Correlation ID is already in context (set by the previous interceptor).
 //
-//  Вывод: [Gateway] GET /users/123 → 200 (45ms) [corr: abc-123]
+//  Output: [Gateway] GET /users/123 → 200 (45ms) [corr: abc-123]
 // ─────────────────────────────────────────────────────────────
 @Injectable()
 export class LoggingInterceptor implements NestInterceptor {
