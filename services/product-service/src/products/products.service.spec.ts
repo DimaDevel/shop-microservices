@@ -17,7 +17,7 @@ const makeProduct = (overrides: Partial<ProductEntity> = {}): ProductEntity =>
     createdAt: new Date('2024-01-01'),
     updatedAt: new Date('2024-01-01'),
     ...overrides,
-  } as ProductEntity);
+  }) as ProductEntity;
 
 describe('ProductsService', () => {
   let service: ProductsService;
@@ -81,7 +81,9 @@ describe('ProductsService', () => {
       mockCache.set.mockResolvedValue(undefined);
 
       let resolveFind!: (v: ProductEntity[]) => void;
-      const findPromise = new Promise<ProductEntity[]>((r) => { resolveFind = r; });
+      const findPromise = new Promise<ProductEntity[]>((r) => {
+        resolveFind = r;
+      });
       mockRepo.find.mockReturnValueOnce(findPromise);
 
       const [p1, p2] = [service.findAll(), service.findAll()];
@@ -145,15 +147,9 @@ describe('ProductsService', () => {
         return Promise.resolve();
       });
 
-      await service.reserveStock(
-        { items: [{ productId: 'prod-1', quantity: 2 }] },
-        mockManager,
-      );
+      await service.reserveStock({ items: [{ productId: 'prod-1', quantity: 2 }] }, mockManager);
 
-      const firstDbOp = Math.min(
-        callOrder.indexOf('findOne'),
-        callOrder.indexOf('save'),
-      );
+      const firstDbOp = Math.min(callOrder.indexOf('findOne'), callOrder.indexOf('save'));
       const lastDel = callOrder.lastIndexOf('del');
       expect(lastDel).toBeLessThan(firstDbOp);
     });

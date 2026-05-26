@@ -38,7 +38,9 @@ export class ProductsSagaController implements OnModuleInit {
   }
 
   private async handleReserveStock(command: ReserveStockCommand): Promise<void> {
-    this.logger.log(`[${command.correlationId}] Reserve-stock for order ${command.orderId}, cmdId: ${command.commandId}`);
+    this.logger.log(
+      `[${command.correlationId}] Reserve-stock for order ${command.orderId}, cmdId: ${command.commandId}`,
+    );
 
     await this.dataSource.transaction(async (manager) => {
       // Idempotency: commandId is checked before touching stock so Kafka at-least-once
@@ -47,7 +49,13 @@ export class ProductsSagaController implements OnModuleInit {
       const existing = await this.idempotencyService.find(manager, command.commandId);
       if (existing) {
         this.logger.log(`[${command.correlationId}] Duplicate command ${command.commandId}, re-scheduling reply`);
-        await this.outboxService.write(manager, command.orderId, existing.replyTopic, command.orderId, existing.replyPayload);
+        await this.outboxService.write(
+          manager,
+          command.orderId,
+          existing.replyTopic,
+          command.orderId,
+          existing.replyPayload,
+        );
         return;
       }
 
@@ -72,21 +80,37 @@ export class ProductsSagaController implements OnModuleInit {
           reason: (e as Error).message,
         };
         await this.idempotencyService.save(manager, command.commandId, KAFKA_TOPICS.STOCK_RESERVATION_FAILED, reply);
-        await this.outboxService.write(manager, command.orderId, KAFKA_TOPICS.STOCK_RESERVATION_FAILED, command.orderId, reply);
+        await this.outboxService.write(
+          manager,
+          command.orderId,
+          KAFKA_TOPICS.STOCK_RESERVATION_FAILED,
+          command.orderId,
+          reply,
+        );
       }
     });
   }
 
   private async handleReleaseStock(command: ReleaseStockCommand): Promise<void> {
-    this.logger.log(`[${command.correlationId}] Release-stock for order ${command.orderId}, cmdId: ${command.commandId}`);
+    this.logger.log(
+      `[${command.correlationId}] Release-stock for order ${command.orderId}, cmdId: ${command.commandId}`,
+    );
 
     await this.dataSource.transaction(async (manager) => {
       // Same idempotency guard as reserve: a retried release command must not
       // release stock a second time, which would corrupt inventory counts.
       const existing = await this.idempotencyService.find(manager, command.commandId);
       if (existing) {
-        this.logger.log(`[${command.correlationId}] Duplicate release command ${command.commandId}, re-scheduling reply`);
-        await this.outboxService.write(manager, command.orderId, existing.replyTopic, command.orderId, existing.replyPayload);
+        this.logger.log(
+          `[${command.correlationId}] Duplicate release command ${command.commandId}, re-scheduling reply`,
+        );
+        await this.outboxService.write(
+          manager,
+          command.orderId,
+          existing.replyTopic,
+          command.orderId,
+          existing.replyPayload,
+        );
         return;
       }
       await this.productsService.releaseStock(command.items, manager);

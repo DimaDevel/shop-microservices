@@ -6,9 +6,7 @@ import { Order } from '../../domain/entities/order';
 
 @Injectable()
 export class GetOrderUseCase {
-  constructor(
-    @Inject(ORDER_REPOSITORY) private readonly orderRepo: IOrderRepository,
-  ) {}
+  constructor(@Inject(ORDER_REPOSITORY) private readonly orderRepo: IOrderRepository) {}
 
   async execute(id: string, userId: string): Promise<OrderResult> {
     const order = await this.orderRepo.findById(id);

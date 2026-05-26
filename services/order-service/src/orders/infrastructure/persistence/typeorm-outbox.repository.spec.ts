@@ -5,8 +5,12 @@ interface FakeManager {
   createQueryBuilder: jest.Mock;
   getRepository: jest.Mock;
   _qb: {
-    where: jest.Mock; andWhere: jest.Mock; orderBy: jest.Mock;
-    limit: jest.Mock; setLock: jest.Mock; getMany: jest.Mock;
+    where: jest.Mock;
+    andWhere: jest.Mock;
+    orderBy: jest.Mock;
+    limit: jest.Mock;
+    setLock: jest.Mock;
+    getMany: jest.Mock;
   };
   _repo: { save: jest.Mock; create: jest.Mock; update: jest.Mock };
 }
@@ -81,10 +85,13 @@ describe('TypeOrmOutboxRepository', () => {
 
       await repo.markPublished('rec-1', manager as any);
 
-      expect(manager._repo.update).toHaveBeenCalledWith('rec-1', expect.objectContaining({
-        status: OutboxStatus.PUBLISHED,
-        publishedAt: expect.any(Date),
-      }));
+      expect(manager._repo.update).toHaveBeenCalledWith(
+        'rec-1',
+        expect.objectContaining({
+          status: OutboxStatus.PUBLISHED,
+          publishedAt: expect.any(Date),
+        }),
+      );
     });
   });
 

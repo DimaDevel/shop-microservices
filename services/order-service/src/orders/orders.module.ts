@@ -19,9 +19,7 @@ import { OrdersController } from './orders.controller';
 import { SagaReplyController } from './saga-reply.controller';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([OrderOrmEntity, OrderItemOrmEntity, OutboxOrmEntity, SagaStateOrmEntity]),
-  ],
+  imports: [TypeOrmModule.forFeature([OrderOrmEntity, OrderItemOrmEntity, OutboxOrmEntity, SagaStateOrmEntity])],
   providers: [
     { provide: ORDER_REPOSITORY, useClass: TypeOrmOrderRepository },
     { provide: SAGA_REPOSITORY, useClass: TypeOrmSagaRepository },

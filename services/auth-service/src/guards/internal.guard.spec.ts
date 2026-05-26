@@ -7,7 +7,7 @@ import { HEADERS } from '@nest-gateway/shared';
 
 const EXPECTED_SECRET = 'my-internal-secret';
 
-function makeContext(headers: Record<string, string>, isPublic = false): ExecutionContext {
+function makeContext(headers: Record<string, string>, _isPublic = false): ExecutionContext {
   return {
     getHandler: jest.fn(),
     getClass: jest.fn(),
@@ -47,9 +47,9 @@ describe('InternalGuard', () => {
   it('throws UnauthorizedException when header value is incorrect', () => {
     reflector.getAllAndOverride.mockReturnValue(false);
 
-    expect(() =>
-      guard.canActivate(makeContext({ [HEADERS.INTERNAL_SECRET]: 'wrong-secret' })),
-    ).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(makeContext({ [HEADERS.INTERNAL_SECRET]: 'wrong-secret' }))).toThrow(
+      UnauthorizedException,
+    );
   });
 
   it('returns true when secret matches', () => {

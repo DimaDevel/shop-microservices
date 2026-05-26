@@ -22,10 +22,7 @@ describe('PaymentsService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        PaymentsService,
-        { provide: getRepositoryToken(PaymentEntity), useValue: {} },
-      ],
+      providers: [PaymentsService, { provide: getRepositoryToken(PaymentEntity), useValue: {} }],
     }).compile();
 
     service = module.get<PaymentsService>(PaymentsService);
@@ -51,10 +48,7 @@ describe('PaymentsService', () => {
 
   describe('processPayment', () => {
     it('completes and returns a transactionId when amount < 10000', async () => {
-      const result = await service.processPayment(
-        { orderId: 'order-1', userId: 'user-1', amount: 9_999 },
-        mockManager,
-      );
+      const result = await service.processPayment({ orderId: 'order-1', userId: 'user-1', amount: 9_999 }, mockManager);
 
       expect(result.transactionId).toMatch(/^txn-/);
       expect(mockPaymentRepo.update).toHaveBeenCalledWith(

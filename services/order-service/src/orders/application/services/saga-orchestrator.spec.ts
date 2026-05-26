@@ -9,9 +9,16 @@ import { Saga, SagaStep, SagaStatus } from '../../domain/entities/saga';
 import { OrderItem } from '../../domain/entities/order-item';
 
 const makeOrder = (status: OrderStatus = OrderStatus.CONFIRMED): Order =>
-  new Order('order-1', 'user-1', 'user@example.com', status, 50, [
-    new OrderItem('item-1', 'prod-1', 'Widget', 2, 25),
-  ], new Date(), new Date());
+  new Order(
+    'order-1',
+    'user-1',
+    'user@example.com',
+    status,
+    50,
+    [new OrderItem('item-1', 'prod-1', 'Widget', 2, 25)],
+    new Date(),
+    new Date(),
+  );
 
 const makeSaga = (step: SagaStep = SagaStep.RESERVE_STOCK, status: SagaStatus = SagaStatus.RUNNING): Saga =>
   new Saga('saga-1', 'order-1', 'corr-1', step, status, 0, null, new Date(), new Date(), new Date());
@@ -19,7 +26,13 @@ const makeSaga = (step: SagaStep = SagaStep.RESERVE_STOCK, status: SagaStatus = 
 describe('SagaOrchestrator', () => {
   let orchestrator: SagaOrchestrator;
   let orderRepo: { save: jest.Mock; findById: jest.Mock; findByUser: jest.Mock; update: jest.Mock };
-  let sagaRepo: { save: jest.Mock; findByOrderIdWithLock: jest.Mock; findByIdSkipLocked: jest.Mock; findStuck: jest.Mock; update: jest.Mock };
+  let sagaRepo: {
+    save: jest.Mock;
+    findByOrderIdWithLock: jest.Mock;
+    findByIdSkipLocked: jest.Mock;
+    findStuck: jest.Mock;
+    update: jest.Mock;
+  };
   let outboxRepo: { write: jest.Mock };
   let dataSource: { transaction: jest.Mock };
   let fakeManager: object;
@@ -27,7 +40,13 @@ describe('SagaOrchestrator', () => {
   beforeEach(async () => {
     fakeManager = {};
     orderRepo = { save: jest.fn(), findById: jest.fn(), findByUser: jest.fn(), update: jest.fn() };
-    sagaRepo = { save: jest.fn(), findByOrderIdWithLock: jest.fn(), findByIdSkipLocked: jest.fn(), findStuck: jest.fn(), update: jest.fn() };
+    sagaRepo = {
+      save: jest.fn(),
+      findByOrderIdWithLock: jest.fn(),
+      findByIdSkipLocked: jest.fn(),
+      findStuck: jest.fn(),
+      update: jest.fn(),
+    };
     outboxRepo = { write: jest.fn() };
     dataSource = {
       transaction: jest.fn().mockImplementation((cb: (m: unknown) => Promise<unknown>) => cb(fakeManager)),
@@ -64,7 +83,10 @@ describe('SagaOrchestrator', () => {
         items: [{ productId: 'prod-1', name: 'Widget', unitPrice: 25, quantity: 2 }],
       });
 
-      expect(sagaRepo.update).toHaveBeenCalledWith(expect.objectContaining({ currentStep: SagaStep.PROCESS_PAYMENT }), fakeManager);
+      expect(sagaRepo.update).toHaveBeenCalledWith(
+        expect.objectContaining({ currentStep: SagaStep.PROCESS_PAYMENT }),
+        fakeManager,
+      );
       expect(orderRepo.update).toHaveBeenCalledTimes(1);
       expect(outboxRepo.write).toHaveBeenCalledTimes(1);
     });
@@ -95,7 +117,12 @@ describe('SagaOrchestrator', () => {
       sagaRepo.update.mockResolvedValue(undefined);
       outboxRepo.write.mockResolvedValue(undefined);
 
-      await orchestrator.onStockReservationFailed({ commandId: 'cmd-1', orderId: 'order-1', correlationId: 'corr-1', reason: 'out of stock' });
+      await orchestrator.onStockReservationFailed({
+        commandId: 'cmd-1',
+        orderId: 'order-1',
+        correlationId: 'corr-1',
+        reason: 'out of stock',
+      });
 
       expect(sagaRepo.update).toHaveBeenCalledWith(expect.objectContaining({ status: SagaStatus.FAILED }), fakeManager);
       expect(outboxRepo.write).toHaveBeenCalledTimes(1);
@@ -104,7 +131,12 @@ describe('SagaOrchestrator', () => {
     it('is a no-op for duplicate event', async () => {
       sagaRepo.findByOrderIdWithLock.mockResolvedValue(makeSaga(SagaStep.PROCESS_PAYMENT));
 
-      await orchestrator.onStockReservationFailed({ commandId: 'cmd-1', orderId: 'order-1', correlationId: 'corr-1', reason: 'out of stock' });
+      await orchestrator.onStockReservationFailed({
+        commandId: 'cmd-1',
+        orderId: 'order-1',
+        correlationId: 'corr-1',
+        reason: 'out of stock',
+      });
 
       expect(outboxRepo.write).not.toHaveBeenCalled();
     });
@@ -119,16 +151,29 @@ describe('SagaOrchestrator', () => {
       sagaRepo.update.mockResolvedValue(saga.advance());
       outboxRepo.write.mockResolvedValue(undefined);
 
-      await orchestrator.onPaymentProcessed({ commandId: 'cmd-1', orderId: 'order-1', correlationId: 'corr-1', transactionId: 'txn-1' });
+      await orchestrator.onPaymentProcessed({
+        commandId: 'cmd-1',
+        orderId: 'order-1',
+        correlationId: 'corr-1',
+        transactionId: 'txn-1',
+      });
 
-      expect(sagaRepo.update).toHaveBeenCalledWith(expect.objectContaining({ currentStep: SagaStep.COMPLETED }), fakeManager);
+      expect(sagaRepo.update).toHaveBeenCalledWith(
+        expect.objectContaining({ currentStep: SagaStep.COMPLETED }),
+        fakeManager,
+      );
       expect(outboxRepo.write).toHaveBeenCalledTimes(1);
     });
 
     it('is a no-op for duplicate event', async () => {
       sagaRepo.findByOrderIdWithLock.mockResolvedValue(makeSaga(SagaStep.RESERVE_STOCK));
 
-      await orchestrator.onPaymentProcessed({ commandId: 'cmd-1', orderId: 'order-1', correlationId: 'corr-1', transactionId: 'txn-1' });
+      await orchestrator.onPaymentProcessed({
+        commandId: 'cmd-1',
+        orderId: 'order-1',
+        correlationId: 'corr-1',
+        transactionId: 'txn-1',
+      });
 
       expect(outboxRepo.write).not.toHaveBeenCalled();
     });
@@ -143,7 +188,12 @@ describe('SagaOrchestrator', () => {
       sagaRepo.update.mockResolvedValue(undefined);
       outboxRepo.write.mockResolvedValue(undefined);
 
-      await orchestrator.onPaymentFailed({ commandId: 'cmd-1', orderId: 'order-1', correlationId: 'corr-1', reason: 'insufficient funds' });
+      await orchestrator.onPaymentFailed({
+        commandId: 'cmd-1',
+        orderId: 'order-1',
+        correlationId: 'corr-1',
+        reason: 'insufficient funds',
+      });
 
       expect(sagaRepo.update).toHaveBeenCalledWith(
         expect.objectContaining({ currentStep: SagaStep.RELEASE_STOCK }),
@@ -155,7 +205,12 @@ describe('SagaOrchestrator', () => {
     it('is a no-op for duplicate event', async () => {
       sagaRepo.findByOrderIdWithLock.mockResolvedValue(makeSaga(SagaStep.RESERVE_STOCK));
 
-      await orchestrator.onPaymentFailed({ commandId: 'cmd-1', orderId: 'order-1', correlationId: 'corr-1', reason: 'insufficient funds' });
+      await orchestrator.onPaymentFailed({
+        commandId: 'cmd-1',
+        orderId: 'order-1',
+        correlationId: 'corr-1',
+        reason: 'insufficient funds',
+      });
 
       expect(outboxRepo.write).not.toHaveBeenCalled();
     });
@@ -187,7 +242,18 @@ describe('SagaOrchestrator', () => {
 
   describe('retryStuckSagas', () => {
     it('marks saga FAILED when max retries exceeded', async () => {
-      const stuckSaga = new Saga('saga-1', 'order-1', 'corr-1', SagaStep.RESERVE_STOCK, SagaStatus.RUNNING, Saga.MAX_RETRIES, null, new Date(), new Date(), new Date());
+      const stuckSaga = new Saga(
+        'saga-1',
+        'order-1',
+        'corr-1',
+        SagaStep.RESERVE_STOCK,
+        SagaStatus.RUNNING,
+        Saga.MAX_RETRIES,
+        null,
+        new Date(),
+        new Date(),
+        new Date(),
+      );
       sagaRepo.findStuck.mockResolvedValue([stuckSaga]);
       sagaRepo.findByIdSkipLocked.mockResolvedValue(stuckSaga);
       sagaRepo.update.mockResolvedValue(undefined);
@@ -229,17 +295,39 @@ describe('SagaOrchestrator', () => {
     });
 
     it('logs error and continues to next saga when one transaction fails', async () => {
-      const saga1 = new Saga('saga-1', 'order-1', 'corr-1', SagaStep.RESERVE_STOCK, SagaStatus.RUNNING, 0, null, new Date(), new Date(), new Date());
-      const saga2 = new Saga('saga-2', 'order-2', 'corr-2', SagaStep.RESERVE_STOCK, SagaStatus.RUNNING, 0, null, new Date(), new Date(), new Date());
+      const saga1 = new Saga(
+        'saga-1',
+        'order-1',
+        'corr-1',
+        SagaStep.RESERVE_STOCK,
+        SagaStatus.RUNNING,
+        0,
+        null,
+        new Date(),
+        new Date(),
+        new Date(),
+      );
+      const saga2 = new Saga(
+        'saga-2',
+        'order-2',
+        'corr-2',
+        SagaStep.RESERVE_STOCK,
+        SagaStatus.RUNNING,
+        0,
+        null,
+        new Date(),
+        new Date(),
+        new Date(),
+      );
       const goodOrder = makeOrder(OrderStatus.PENDING);
 
       sagaRepo.findStuck.mockResolvedValue([saga1, saga2]);
       sagaRepo.findByIdSkipLocked
-        .mockResolvedValueOnce(saga1)  // first saga — order missing
+        .mockResolvedValueOnce(saga1) // first saga — order missing
         .mockResolvedValueOnce(saga2); // second saga — succeeds
       sagaRepo.update.mockResolvedValue(undefined);
       orderRepo.findById
-        .mockResolvedValueOnce(null)       // causes OrderNotFoundError for saga1
+        .mockResolvedValueOnce(null) // causes OrderNotFoundError for saga1
         .mockResolvedValueOnce(goodOrder); // saga2 succeeds
       outboxRepo.write.mockResolvedValue(undefined);
 

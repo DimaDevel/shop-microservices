@@ -73,9 +73,7 @@ describe('OutboxProcessorService', () => {
 
     await service.processPending();
 
-    expect(outboxRepo.scheduleRetry).toHaveBeenCalledWith(
-      'rec-1', 1, 'kafka down', expect.any(Date), fakeManager,
-    );
+    expect(outboxRepo.scheduleRetry).toHaveBeenCalledWith('rec-1', 1, 'kafka down', expect.any(Date), fakeManager);
     expect(outboxRepo.permanentlyFail).not.toHaveBeenCalled();
   });
 

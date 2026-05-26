@@ -17,7 +17,7 @@ const makeProfile = (overrides: Partial<ProfileEntity> = {}): ProfileEntity =>
     createdAt: now,
     updatedAt: now,
     ...overrides,
-  } as ProfileEntity);
+  }) as ProfileEntity;
 
 describe('UsersService', () => {
   let service: UsersService;
@@ -31,10 +31,7 @@ describe('UsersService', () => {
     };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        UsersService,
-        { provide: getRepositoryToken(ProfileEntity), useValue: profilesRepo },
-      ],
+      providers: [UsersService, { provide: getRepositoryToken(ProfileEntity), useValue: profilesRepo }],
     }).compile();
 
     service = module.get(UsersService);
@@ -70,8 +67,7 @@ describe('UsersService', () => {
     it('throws ForbiddenException when non-admin accesses another user', async () => {
       profilesRepo.findOne.mockResolvedValue(makeProfile());
 
-      await expect(service.findById('uuid-1', 'other-uuid', [Role.USER]))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.findById('uuid-1', 'other-uuid', [Role.USER])).rejects.toThrow(ForbiddenException);
     });
   });
 
@@ -93,12 +89,9 @@ describe('UsersService', () => {
       profilesRepo.findOne.mockResolvedValue(profile);
       profilesRepo.save.mockResolvedValue({ ...profile, avatarUrl: 'https://example.com/a.png' });
 
-      const result = await service.update(
-        'uuid-1',
-        { avatarUrl: 'https://example.com/a.png' },
-        'admin-uuid',
-        [Role.ADMIN],
-      );
+      const result = await service.update('uuid-1', { avatarUrl: 'https://example.com/a.png' }, 'admin-uuid', [
+        Role.ADMIN,
+      ]);
 
       expect(result.avatarUrl).toBe('https://example.com/a.png');
     });
@@ -112,8 +105,9 @@ describe('UsersService', () => {
     it('throws ForbiddenException when non-admin updates another user', async () => {
       profilesRepo.findOne.mockResolvedValue(makeProfile());
 
-      await expect(service.update('uuid-1', { name: 'X' }, 'other-uuid', [Role.USER]))
-        .rejects.toThrow(ForbiddenException);
+      await expect(service.update('uuid-1', { name: 'X' }, 'other-uuid', [Role.USER])).rejects.toThrow(
+        ForbiddenException,
+      );
     });
   });
 

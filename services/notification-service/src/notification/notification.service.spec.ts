@@ -12,10 +12,7 @@ describe('NotificationService', () => {
     jest.clearAllMocks();
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        NotificationService,
-        { provide: getRepositoryToken(NotificationLogEntity), useValue: mockLogRepo },
-      ],
+      providers: [NotificationService, { provide: getRepositoryToken(NotificationLogEntity), useValue: mockLogRepo }],
     }).compile();
 
     service = module.get<NotificationService>(NotificationService);

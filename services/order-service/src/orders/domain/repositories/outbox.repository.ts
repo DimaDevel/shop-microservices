@@ -14,6 +14,12 @@ export interface IOutboxRepository {
   write(aggregateId: string, topic: string, key: string, payload: object, manager: EntityManager): Promise<void>;
   findPendingWithLock(limit: number, manager: EntityManager): Promise<OutboxRecord[]>;
   markPublished(id: string, manager: EntityManager): Promise<void>;
-  scheduleRetry(id: string, retryCount: number, error: string, scheduledAt: Date, manager: EntityManager): Promise<void>;
+  scheduleRetry(
+    id: string,
+    retryCount: number,
+    error: string,
+    scheduledAt: Date,
+    manager: EntityManager,
+  ): Promise<void>;
   permanentlyFail(id: string, retryCount: number, error: string, manager: EntityManager): Promise<void>;
 }

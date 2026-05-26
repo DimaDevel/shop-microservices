@@ -32,7 +32,12 @@ export class SagaOrchestrator {
     private readonly dataSource: DataSource,
   ) {}
 
-  async startSaga(orderId: string, items: Array<{ productId: string; quantity: number }>, correlationId: string, manager: EntityManager): Promise<void> {
+  async startSaga(
+    orderId: string,
+    items: Array<{ productId: string; quantity: number }>,
+    correlationId: string,
+    manager: EntityManager,
+  ): Promise<void> {
     const saga = await this.sagaRepo.save(Saga.create(orderId, correlationId), manager);
     const command: ReserveStockCommand = { commandId: saga.id, orderId, correlationId, items };
     await this.outboxRepo.write(orderId, KAFKA_TOPICS.RESERVE_STOCK, orderId, command, manager);
@@ -68,7 +73,9 @@ export class SagaOrchestrator {
     await this.dataSource.transaction(async (manager) => {
       const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);
       if (!saga?.canHandle(SagaStep.RESERVE_STOCK)) {
-        this.logger.warn(`[${event.correlationId}] Ignoring duplicate stock-reservation-failed for order ${event.orderId}`);
+        this.logger.warn(
+          `[${event.correlationId}] Ignoring duplicate stock-reservation-failed for order ${event.orderId}`,
+        );
         return;
       }
       await this.performCancellation(manager, saga, event.orderId, event.reason);
@@ -160,25 +167,36 @@ export class SagaOrchestrator {
 
           if (freshSaga.hasExceededMaxRetries()) {
             await this.sagaRepo.update(freshSaga.fail('Max retries exceeded'), manager);
-            this.logger.error(`[${freshSaga.correlationId}] Saga for order ${freshSaga.orderId} permanently failed after ${Saga.MAX_RETRIES} retries`);
+            this.logger.error(
+              `[${freshSaga.correlationId}] Saga for order ${freshSaga.orderId} permanently failed after ${Saga.MAX_RETRIES} retries`,
+            );
             return;
           }
 
           const retried = freshSaga.scheduleRetry();
           await this.sagaRepo.update(retried, manager);
-          this.logger.warn(`[${freshSaga.correlationId}] Retrying saga for order ${freshSaga.orderId}, step=${freshSaga.currentStep}, attempt=${retried.retryCount}`);
+          this.logger.warn(
+            `[${freshSaga.correlationId}] Retrying saga for order ${freshSaga.orderId}, step=${freshSaga.currentStep}, attempt=${retried.retryCount}`,
+          );
 
           const order = await this.orderRepo.findById(freshSaga.orderId, manager);
           if (!order) throw new OrderNotFoundError(freshSaga.orderId);
           await this.resendCommand(freshSaga, order, manager);
         });
       } catch (err) {
-        this.logger.error(`[${saga.correlationId}] retryStuckSagas failed for saga ${saga.id}: ${(err as Error).message}`);
+        this.logger.error(
+          `[${saga.correlationId}] retryStuckSagas failed for saga ${saga.id}: ${(err as Error).message}`,
+        );
       }
     }
   }
 
-  private async performCancellation(manager: EntityManager, saga: Saga, orderId: string, reason: string): Promise<void> {
+  private async performCancellation(
+    manager: EntityManager,
+    saga: Saga,
+    orderId: string,
+    reason: string,
+  ): Promise<void> {
     const order = await this.orderRepo.findById(orderId, manager);
     if (!order) throw new OrderNotFoundError(orderId);
     await this.orderRepo.update(order.compensate(), manager);

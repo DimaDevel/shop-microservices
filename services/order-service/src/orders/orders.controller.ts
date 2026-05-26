@@ -44,10 +44,7 @@ export class OrdersController {
   }
 
   @Get(':id')
-  async findById(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Headers(HEADERS.USER_ID) userId: string,
-  ) {
+  async findById(@Param('id', ParseUUIDPipe) id: string, @Headers(HEADERS.USER_ID) userId: string) {
     if (!userId) throw new UnauthorizedException('Missing user id');
     try {
       return await this.getOrderUseCase.execute(id, userId);

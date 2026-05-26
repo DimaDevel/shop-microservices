@@ -25,7 +25,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     try {
       const cached = await this.cache.get<RequestUser>(key);
       if (cached) return cached;
-    } catch { /* Redis unavailable – fall through */ }
+    } catch {
+      /* Redis unavailable – fall through */
+    }
 
     const user: RequestUser = {
       id: payload.sub,
@@ -37,7 +39,9 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (ttlMs > 0) {
       try {
         await this.cache.set(key, user, ttlMs);
-      } catch { /* Redis unavailable – non-fatal, token still valid */ }
+      } catch {
+        /* Redis unavailable – non-fatal, token still valid */
+      }
     }
 
     return user;

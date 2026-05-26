@@ -20,11 +20,7 @@ export class Order {
     readonly updatedAt: Date,
   ) {}
 
-  static create(
-    userId: string,
-    userEmail: string,
-    items: Array<{ productId: string; quantity: number }>,
-  ): Order {
+  static create(userId: string, userEmail: string, items: Array<{ productId: string; quantity: number }>): Order {
     const now = new Date();
     return new Order(
       '',
@@ -38,27 +34,40 @@ export class Order {
     );
   }
 
-  confirm(
-    total: number,
-    itemDetails: Array<{ productId: string; name: string; unitPrice: number }>,
-  ): Order {
+  confirm(total: number, itemDetails: Array<{ productId: string; name: string; unitPrice: number }>): Order {
     if (this.status !== OrderStatus.PENDING) {
       throw new InvalidOrderTransitionError(this.status, OrderStatus.CONFIRMED);
     }
     const updatedItems = this.items.map((item) => {
       const detail = itemDetails.find((d) => d.productId === item.productId);
-      return detail
-        ? new OrderItem(item.id, item.productId, detail.name, item.quantity, detail.unitPrice)
-        : item;
+      return detail ? new OrderItem(item.id, item.productId, detail.name, item.quantity, detail.unitPrice) : item;
     });
-    return new Order(this.id, this.userId, this.userEmail, OrderStatus.CONFIRMED, total, updatedItems, this.createdAt, new Date());
+    return new Order(
+      this.id,
+      this.userId,
+      this.userEmail,
+      OrderStatus.CONFIRMED,
+      total,
+      updatedItems,
+      this.createdAt,
+      new Date(),
+    );
   }
 
   cancel(): Order {
     if (this.status === OrderStatus.CONFIRMED || this.status === OrderStatus.COMPLETED) {
       throw new InvalidOrderTransitionError(this.status, OrderStatus.CANCELLED);
     }
-    return new Order(this.id, this.userId, this.userEmail, OrderStatus.CANCELLED, this.total, this.items, this.createdAt, new Date());
+    return new Order(
+      this.id,
+      this.userId,
+      this.userEmail,
+      OrderStatus.CANCELLED,
+      this.total,
+      this.items,
+      this.createdAt,
+      new Date(),
+    );
   }
 
   // Used by saga compensation — may cancel from PENDING or CONFIRMED, not after COMPLETED
@@ -66,6 +75,15 @@ export class Order {
     if (this.status === OrderStatus.COMPLETED || this.status === OrderStatus.CANCELLED) {
       throw new InvalidOrderTransitionError(this.status, OrderStatus.CANCELLED);
     }
-    return new Order(this.id, this.userId, this.userEmail, OrderStatus.CANCELLED, this.total, this.items, this.createdAt, new Date());
+    return new Order(
+      this.id,
+      this.userId,
+      this.userEmail,
+      OrderStatus.CANCELLED,
+      this.total,
+      this.items,
+      this.createdAt,
+      new Date(),
+    );
   }
 }

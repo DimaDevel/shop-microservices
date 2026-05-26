@@ -27,7 +27,9 @@ export class PaymentsSagaController implements OnModuleInit {
   }
 
   private async handleProcessPayment(command: ProcessPaymentCommand): Promise<void> {
-    this.logger.log(`[${command.correlationId}] Process-payment for order ${command.orderId}, cmdId: ${command.commandId}`);
+    this.logger.log(
+      `[${command.correlationId}] Process-payment for order ${command.orderId}, cmdId: ${command.commandId}`,
+    );
 
     await this.dataSource.transaction(async (manager) => {
       // Idempotency: commandId is checked before any side-effect so Kafka at-least-once
@@ -35,8 +37,16 @@ export class PaymentsSagaController implements OnModuleInit {
       // the stored reply is re-queued to the outbox so the orchestrator receives it again.
       const existing = await this.idempotencyService.find(manager, command.commandId);
       if (existing) {
-        this.logger.log(`[${command.correlationId}] Duplicate payment command ${command.commandId}, re-scheduling reply`);
-        await this.outboxService.write(manager, command.orderId, existing.replyTopic, command.orderId, existing.replyPayload);
+        this.logger.log(
+          `[${command.correlationId}] Duplicate payment command ${command.commandId}, re-scheduling reply`,
+        );
+        await this.outboxService.write(
+          manager,
+          command.orderId,
+          existing.replyTopic,
+          command.orderId,
+          existing.replyPayload,
+        );
         return;
       }
 
@@ -52,7 +62,13 @@ export class PaymentsSagaController implements OnModuleInit {
           transactionId: result.transactionId,
         };
         await this.idempotencyService.save(manager, command.commandId, KAFKA_TOPICS.PAYMENT_PROCESSED, reply);
-        await this.outboxService.write(manager, command.orderId, KAFKA_TOPICS.PAYMENT_PROCESSED, command.orderId, reply);
+        await this.outboxService.write(
+          manager,
+          command.orderId,
+          KAFKA_TOPICS.PAYMENT_PROCESSED,
+          command.orderId,
+          reply,
+        );
       } catch (e) {
         if (!(e instanceof PaymentDeclinedError)) throw e;
         const reply: PaymentFailedEvent = {

@@ -5,13 +5,7 @@ import { OutboxOrmEntity, OutboxStatus } from './outbox.orm-entity';
 
 @Injectable()
 export class TypeOrmOutboxRepository implements IOutboxRepository {
-  async write(
-    aggregateId: string,
-    topic: string,
-    key: string,
-    payload: object,
-    manager: EntityManager,
-  ): Promise<void> {
+  async write(aggregateId: string, topic: string, key: string, payload: object, manager: EntityManager): Promise<void> {
     const repo = manager.getRepository(OutboxOrmEntity);
     await repo.save(repo.create({ aggregateId, topic, messageKey: key, payload }));
   }
@@ -42,7 +36,13 @@ export class TypeOrmOutboxRepository implements IOutboxRepository {
     });
   }
 
-  async scheduleRetry(id: string, retryCount: number, error: string, scheduledAt: Date, manager: EntityManager): Promise<void> {
+  async scheduleRetry(
+    id: string,
+    retryCount: number,
+    error: string,
+    scheduledAt: Date,
+    manager: EntityManager,
+  ): Promise<void> {
     await manager.getRepository(OutboxOrmEntity).update(id, {
       status: OutboxStatus.PENDING,
       retryCount,

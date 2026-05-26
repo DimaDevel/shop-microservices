@@ -6,9 +6,16 @@ import { OrderItem } from '../../domain/entities/order-item';
 import { OrderNotFoundError } from '../../domain/errors/orders.errors';
 
 const makeOrder = (): Order =>
-  new Order('order-1', 'user-1', 'user@example.com', OrderStatus.PENDING, 0, [
-    new OrderItem('item-1', 'prod-1', 'Widget', 2, 25),
-  ], new Date(), new Date());
+  new Order(
+    'order-1',
+    'user-1',
+    'user@example.com',
+    OrderStatus.PENDING,
+    0,
+    [new OrderItem('item-1', 'prod-1', 'Widget', 2, 25)],
+    new Date(),
+    new Date(),
+  );
 
 describe('GetOrderUseCase', () => {
   let useCase: GetOrderUseCase;
@@ -18,10 +25,7 @@ describe('GetOrderUseCase', () => {
     orderRepo = { findById: jest.fn(), findByUser: jest.fn(), save: jest.fn(), update: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GetOrderUseCase,
-        { provide: ORDER_REPOSITORY, useValue: orderRepo },
-      ],
+      providers: [GetOrderUseCase, { provide: ORDER_REPOSITORY, useValue: orderRepo }],
     }).compile();
 
     useCase = module.get(GetOrderUseCase);

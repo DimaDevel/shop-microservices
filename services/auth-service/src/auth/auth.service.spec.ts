@@ -26,7 +26,7 @@ const makeUser = (overrides: Partial<UserEntity> = {}): UserEntity =>
     createdAt: new Date(),
     updatedAt: new Date(),
     ...overrides,
-  } as UserEntity);
+  }) as UserEntity;
 
 describe('AuthService', () => {
   let service: AuthService;
@@ -108,8 +108,9 @@ describe('AuthService', () => {
     it('throws EmailAlreadyTakenError when email exists', async () => {
       usersRepo.findOne.mockResolvedValue(makeUser());
 
-      await expect(service.register({ email: 'test@example.com', password: 'pass1234' }))
-        .rejects.toThrow(EmailAlreadyTakenError);
+      await expect(service.register({ email: 'test@example.com', password: 'pass1234' })).rejects.toThrow(
+        EmailAlreadyTakenError,
+      );
     });
 
     it('rethrows when JWT signing fails', async () => {
@@ -119,8 +120,9 @@ describe('AuthService', () => {
       usersRepo.save.mockResolvedValue(user);
       (jwtService.signAsync as jest.Mock).mockRejectedValue(new Error('jwt lib error'));
 
-      await expect(service.register({ email: 'test@example.com', password: 'pass1234' }))
-        .rejects.toThrow('jwt lib error');
+      await expect(service.register({ email: 'test@example.com', password: 'pass1234' })).rejects.toThrow(
+        'jwt lib error',
+      );
     });
   });
 
@@ -139,16 +141,18 @@ describe('AuthService', () => {
     it('throws InvalidCredentialsError when user not found', async () => {
       mockQb.getOne.mockResolvedValue(null);
 
-      await expect(service.login({ email: 'no@one.com', password: 'pass1234' }))
-        .rejects.toThrow(InvalidCredentialsError);
+      await expect(service.login({ email: 'no@one.com', password: 'pass1234' })).rejects.toThrow(
+        InvalidCredentialsError,
+      );
     });
 
     it('throws InvalidCredentialsError when password does not match', async () => {
       mockQb.getOne.mockResolvedValue(makeUser());
       (bcrypt.compare as jest.Mock).mockResolvedValue(false);
 
-      await expect(service.login({ email: 'test@example.com', password: 'wrongpass' }))
-        .rejects.toThrow(InvalidCredentialsError);
+      await expect(service.login({ email: 'test@example.com', password: 'wrongpass' })).rejects.toThrow(
+        InvalidCredentialsError,
+      );
     });
   });
 

@@ -8,8 +8,8 @@ import { CreateProductInput, UpdateProductInput, ReserveStockInput } from './pro
 import { ProductResult, ReserveStockResult } from './products.outputs';
 import { ProductNotFoundError, InsufficientStockError } from './products.errors';
 
-const CACHE_TTL_ALL = 15 * 60 * 1000;  // 15 min
-const CACHE_TTL_ONE = 10 * 60 * 1000;  // 10 min
+const CACHE_TTL_ALL = 15 * 60 * 1000; // 15 min
+const CACHE_TTL_ONE = 10 * 60 * 1000; // 10 min
 
 const keyAll = () => 'products:all';
 const keyOne = (id: string) => `product:${id}`;
@@ -121,10 +121,7 @@ export class ProductsService {
     // re-populate the cache with pre-reservation stock counts.
     // For the own-transaction path: evict after commit (cache miss is harmless).
     const evict = () =>
-      Promise.all([
-        ...input.items.map((item) => this.cache.del(keyOne(item.productId))),
-        this.cache.del(keyAll()),
-      ]);
+      Promise.all([...input.items.map((item) => this.cache.del(keyOne(item.productId))), this.cache.del(keyAll())]);
 
     if (manager) {
       await evict();
@@ -137,16 +134,10 @@ export class ProductsService {
   }
 
   // Compensation: restore stock after a failed payment.
-  async releaseStock(
-    items: Array<{ productId: string; quantity: number }>,
-    manager: EntityManager,
-  ): Promise<void> {
+  async releaseStock(items: Array<{ productId: string; quantity: number }>, manager: EntityManager): Promise<void> {
     // Evict before incrementing: prevents a concurrent reader from re-populating
     // the cache with the pre-compensation value during the uncommitted transaction window.
-    await Promise.all([
-      ...items.map((item) => this.cache.del(keyOne(item.productId))),
-      this.cache.del(keyAll()),
-    ]);
+    await Promise.all([...items.map((item) => this.cache.del(keyOne(item.productId))), this.cache.del(keyAll())]);
 
     const repo = manager.getRepository(ProductEntity);
     for (const item of items) {

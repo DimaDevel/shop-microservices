@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  NestInterceptor,
-  ExecutionContext,
-  CallHandler,
-} from '@nestjs/common';
+import { Injectable, NestInterceptor, ExecutionContext, CallHandler } from '@nestjs/common';
 import { Observable } from 'rxjs';
 import { tap } from 'rxjs/operators';
 import { HEADERS } from '@nest-gateway/shared';
@@ -24,8 +19,7 @@ export class CorrelationIdInterceptor implements NestInterceptor {
     const response = context.switchToHttp().getResponse();
 
     // Use value from incoming request or generate a new one
-    const correlationId =
-      request.headers[HEADERS.CORRELATION_ID] ?? crypto.randomUUID();
+    const correlationId = request.headers[HEADERS.CORRELATION_ID] ?? crypto.randomUUID();
 
     // Attach to request — available in all handlers
     request.correlationId = correlationId;

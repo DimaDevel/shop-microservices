@@ -1,8 +1,11 @@
 import { Saga, SagaStep, SagaStatus } from './saga';
 import { InvalidSagaTransitionError } from '../errors/orders.errors';
 
-const makeSaga = (step: SagaStep = SagaStep.RESERVE_STOCK, status: SagaStatus = SagaStatus.RUNNING, retryCount = 0): Saga =>
-  new Saga('saga-1', 'order-1', 'corr-1', step, status, retryCount, null, new Date(), new Date(), new Date());
+const makeSaga = (
+  step: SagaStep = SagaStep.RESERVE_STOCK,
+  status: SagaStatus = SagaStatus.RUNNING,
+  retryCount = 0,
+): Saga => new Saga('saga-1', 'order-1', 'corr-1', step, status, retryCount, null, new Date(), new Date(), new Date());
 
 describe('Saga', () => {
   describe('create', () => {

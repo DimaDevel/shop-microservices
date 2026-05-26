@@ -38,10 +38,7 @@ export class ProductsController {
   }
 
   @Post()
-  async create(
-    @Body() dto: CreateProductDto,
-    @Headers(HEADERS.USER_ROLES) rolesHeader: string,
-  ) {
+  async create(@Body() dto: CreateProductDto, @Headers(HEADERS.USER_ROLES) rolesHeader: string) {
     this.requireAdmin(rolesHeader);
     return this.productsService.create({
       name: dto.name,
@@ -73,10 +70,7 @@ export class ProductsController {
 
   @Delete(':id')
   @HttpCode(204)
-  async remove(
-    @Param('id', ParseUUIDPipe) id: string,
-    @Headers(HEADERS.USER_ROLES) rolesHeader: string,
-  ) {
+  async remove(@Param('id', ParseUUIDPipe) id: string, @Headers(HEADERS.USER_ROLES) rolesHeader: string) {
     this.requireAdmin(rolesHeader);
     try {
       await this.productsService.remove(id);

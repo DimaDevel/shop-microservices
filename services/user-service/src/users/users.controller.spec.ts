@@ -91,12 +91,9 @@ describe('UsersController', () => {
 
       await controller.updateUser('uuid-1', dto, 'uuid-1', 'user');
 
-      expect(usersService.update).toHaveBeenCalledWith(
-        'uuid-1',
-        { name: 'New Name', avatarUrl: undefined },
-        'uuid-1',
-        [Role.USER],
-      );
+      expect(usersService.update).toHaveBeenCalledWith('uuid-1', { name: 'New Name', avatarUrl: undefined }, 'uuid-1', [
+        Role.USER,
+      ]);
     });
   });
 

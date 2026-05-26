@@ -11,9 +11,7 @@ export class OrderMapper {
       orm.userEmail,
       orm.status as OrderStatus,
       Number(orm.total),
-      (orm.items ?? []).map(
-        (i) => new OrderItem(i.id, i.productId, i.productName, i.quantity, Number(i.unitPrice)),
-      ),
+      (orm.items ?? []).map((i) => new OrderItem(i.id, i.productId, i.productName, i.quantity, Number(i.unitPrice))),
       orm.createdAt,
       orm.updatedAt,
     );

@@ -55,11 +55,7 @@ describe('JwtStrategy', () => {
     const result = await strategy.validate(payload);
 
     expect(result).toEqual({ id: payload.sub, email: payload.email, roles: payload.roles });
-    expect(mockCache.set).toHaveBeenCalledWith(
-      `jwt:${payload.sub}:${payload.iat}`,
-      result,
-      expect.any(Number),
-    );
+    expect(mockCache.set).toHaveBeenCalledWith(`jwt:${payload.sub}:${payload.iat}`, result, expect.any(Number));
     const ttlArg: number = mockCache.set.mock.calls[0][2];
     expect(ttlArg).toBeGreaterThan(0);
   });

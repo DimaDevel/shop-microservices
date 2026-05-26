@@ -90,9 +90,9 @@ describe('SagaReplyController', () => {
     it('rethrows non-domain errors so Kafka can retry', async () => {
       orchestrator.onStockReserved.mockRejectedValue(new Error('db connection lost'));
 
-      await expect(
-        handlers.get(KAFKA_TOPICS.STOCK_RESERVED)!(envelope({ orderId: 'order-1' })),
-      ).rejects.toThrow('db connection lost');
+      await expect(handlers.get(KAFKA_TOPICS.STOCK_RESERVED)!(envelope({ orderId: 'order-1' }))).rejects.toThrow(
+        'db connection lost',
+      );
     });
 
     it('swallows OrderNotFoundError on payment events too', async () => {

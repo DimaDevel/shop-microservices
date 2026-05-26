@@ -13,9 +13,7 @@ export class HealthController {
   @Get()
   @HealthCheck()
   check() {
-    return this.health.check([
-      () => this.kafka.isHealthy('kafka'),
-    ]);
+    return this.health.check([() => this.kafka.isHealthy('kafka')]);
   }
 }
 

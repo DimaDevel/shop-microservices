@@ -9,23 +9,53 @@ import { Saga, SagaStep, SagaStatus } from '../../domain/entities/saga';
 import { OrderItem } from '../../domain/entities/order-item';
 
 const makeSavedOrder = (): Order =>
-  new Order('order-1', 'user-1', 'user@example.com', OrderStatus.PENDING, 0, [
-    new OrderItem('item-1', 'prod-1', '', 2, 0),
-  ], new Date(), new Date());
+  new Order(
+    'order-1',
+    'user-1',
+    'user@example.com',
+    OrderStatus.PENDING,
+    0,
+    [new OrderItem('item-1', 'prod-1', '', 2, 0)],
+    new Date(),
+    new Date(),
+  );
 
 const makeSavedSaga = (): Saga =>
-  new Saga('saga-1', 'order-1', 'corr-1', SagaStep.RESERVE_STOCK, SagaStatus.RUNNING, 0, null, new Date(), new Date(), new Date());
+  new Saga(
+    'saga-1',
+    'order-1',
+    'corr-1',
+    SagaStep.RESERVE_STOCK,
+    SagaStatus.RUNNING,
+    0,
+    null,
+    new Date(),
+    new Date(),
+    new Date(),
+  );
 
 describe('CreateOrderUseCase', () => {
   let useCase: CreateOrderUseCase;
   let orderRepo: { save: jest.Mock; findById: jest.Mock; findByUser: jest.Mock; update: jest.Mock };
-  let sagaRepo: { save: jest.Mock; findByOrderIdWithLock: jest.Mock; findByIdSkipLocked: jest.Mock; findStuck: jest.Mock; update: jest.Mock };
+  let sagaRepo: {
+    save: jest.Mock;
+    findByOrderIdWithLock: jest.Mock;
+    findByIdSkipLocked: jest.Mock;
+    findStuck: jest.Mock;
+    update: jest.Mock;
+  };
   let outboxRepo: { write: jest.Mock };
   let dataSource: { transaction: jest.Mock };
 
   beforeEach(async () => {
     orderRepo = { save: jest.fn(), findById: jest.fn(), findByUser: jest.fn(), update: jest.fn() };
-    sagaRepo = { save: jest.fn(), findByOrderIdWithLock: jest.fn(), findByIdSkipLocked: jest.fn(), findStuck: jest.fn(), update: jest.fn() };
+    sagaRepo = {
+      save: jest.fn(),
+      findByOrderIdWithLock: jest.fn(),
+      findByIdSkipLocked: jest.fn(),
+      findStuck: jest.fn(),
+      update: jest.fn(),
+    };
     outboxRepo = { write: jest.fn() };
     dataSource = {
       transaction: jest.fn().mockImplementation((cb: (manager: unknown) => Promise<unknown>) => cb({})),

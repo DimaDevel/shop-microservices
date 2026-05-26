@@ -36,6 +36,9 @@ Thumbs.db
 *.swo
 *~
 
+# ── Linting cache ─────────────────────────────────────────────────────────────
+.eslintcache
+
 # ── Docker / infrastructure data volumes ──────────────────────────────────────
 pgdata/
 zookeeper-data/

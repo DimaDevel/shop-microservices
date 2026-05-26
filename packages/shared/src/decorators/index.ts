@@ -9,12 +9,10 @@ import { RequestUser } from '../interfaces';
 //  Usage:
 //    async getProfile(@CurrentUser() user: RequestUser) { ... }
 // ─────────────────────────────────────────────────────────────
-export const CurrentUser = createParamDecorator(
-  (_data: unknown, ctx: ExecutionContext): RequestUser => {
-    const request = ctx.switchToHttp().getRequest();
-    return request.user;
-  },
-);
+export const CurrentUser = createParamDecorator((_data: unknown, ctx: ExecutionContext): RequestUser => {
+  const request = ctx.switchToHttp().getRequest();
+  return request.user;
+});
 
 // ─────────────────────────────────────────────────────────────
 //  @Roles(...roles)

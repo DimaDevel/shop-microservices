@@ -5,9 +5,16 @@ import { Order, OrderStatus } from '../../domain/entities/order';
 import { OrderItem } from '../../domain/entities/order-item';
 
 const makeOrder = (id: string): Order =>
-  new Order(id, 'user-1', 'user@example.com', OrderStatus.PENDING, 0, [
-    new OrderItem('item-1', 'prod-1', 'Widget', 2, 25),
-  ], new Date(), new Date());
+  new Order(
+    id,
+    'user-1',
+    'user@example.com',
+    OrderStatus.PENDING,
+    0,
+    [new OrderItem('item-1', 'prod-1', 'Widget', 2, 25)],
+    new Date(),
+    new Date(),
+  );
 
 describe('GetUserOrdersUseCase', () => {
   let useCase: GetUserOrdersUseCase;
@@ -17,10 +24,7 @@ describe('GetUserOrdersUseCase', () => {
     orderRepo = { findById: jest.fn(), findByUser: jest.fn(), save: jest.fn(), update: jest.fn() };
 
     const module: TestingModule = await Test.createTestingModule({
-      providers: [
-        GetUserOrdersUseCase,
-        { provide: ORDER_REPOSITORY, useValue: orderRepo },
-      ],
+      providers: [GetUserOrdersUseCase, { provide: ORDER_REPOSITORY, useValue: orderRepo }],
     }).compile();
 
     useCase = module.get(GetUserOrdersUseCase);

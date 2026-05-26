@@ -1,8 +1,4 @@
-import {
-  Injectable,
-  NotFoundException,
-  ForbiddenException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProfileEntity } from './profile.entity';
@@ -31,7 +27,12 @@ export class UsersService {
     return this.toResult(profile);
   }
 
-  async update(id: string, input: UpdateProfileInput, requesterId: string, requesterRoles: Role[]): Promise<ProfileResult> {
+  async update(
+    id: string,
+    input: UpdateProfileInput,
+    requesterId: string,
+    requesterRoles: Role[],
+  ): Promise<ProfileResult> {
     const profile = await this.profilesRepo.findOne({ where: { id, isActive: true } });
 
     if (!profile) {

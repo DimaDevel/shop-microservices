@@ -23,8 +23,7 @@ export class KafkaModule {
         },
         {
           provide: KafkaConsumerService,
-          useFactory: (k: Kafka, p: KafkaProducerService, o: KafkaModuleOptions) =>
-            new KafkaConsumerService(k, p, o),
+          useFactory: (k: Kafka, p: KafkaProducerService, o: KafkaModuleOptions) => new KafkaConsumerService(k, p, o),
           inject: ['KAFKA_INSTANCE', KafkaProducerService, 'KAFKA_MODULE_OPTIONS'],
         },
         KafkaHealthIndicator,

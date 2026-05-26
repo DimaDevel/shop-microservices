@@ -1,13 +1,4 @@
-import {
-  Controller,
-  Get,
-  Post,
-  Patch,
-  Delete,
-  Param,
-  Body,
-  Headers,
-} from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Param, Body, Headers } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { UpdateUserDto, CreateProfileDto } from './users.dto';
 import { UpdateProfileInput } from './users.inputs';
@@ -49,10 +40,7 @@ export class UsersController {
   }
 
   @Delete(':id')
-  deleteUser(
-    @Param('id') id: string,
-    @Headers(HEADERS.USER_ROLES) rolesHeader: string,
-  ) {
+  deleteUser(@Param('id') id: string, @Headers(HEADERS.USER_ROLES) rolesHeader: string) {
     return this.usersService.remove(id, this.parseRoles(rolesHeader));
   }
 

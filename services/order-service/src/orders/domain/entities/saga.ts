@@ -63,50 +63,62 @@ export class Saga {
 
     const isCompleted = next === SagaStep.COMPLETED;
     return new Saga(
-      this.id, this.orderId, this.correlationId,
+      this.id,
+      this.orderId,
+      this.correlationId,
       next,
       isCompleted ? SagaStatus.COMPLETED : SagaStatus.RUNNING,
       this.retryCount,
       this.lastError,
       isCompleted ? null : new Date(Date.now() + Saga.RETRY_TIMEOUT_MS),
-      this.createdAt, new Date(),
+      this.createdAt,
+      new Date(),
     );
   }
 
   startCompensation(reason: string): Saga {
     return new Saga(
-      this.id, this.orderId, this.correlationId,
+      this.id,
+      this.orderId,
+      this.correlationId,
       SagaStep.RELEASE_STOCK,
       SagaStatus.RUNNING,
       this.retryCount,
       reason,
       new Date(Date.now() + Saga.RETRY_TIMEOUT_MS),
-      this.createdAt, new Date(),
+      this.createdAt,
+      new Date(),
     );
   }
 
   fail(reason: string): Saga {
     return new Saga(
-      this.id, this.orderId, this.correlationId,
+      this.id,
+      this.orderId,
+      this.correlationId,
       SagaStep.FAILED,
       SagaStatus.FAILED,
       this.retryCount,
       reason,
       null,
-      this.createdAt, new Date(),
+      this.createdAt,
+      new Date(),
     );
   }
 
   scheduleRetry(): Saga {
     const nextCount = this.retryCount + 1;
     return new Saga(
-      this.id, this.orderId, this.correlationId,
+      this.id,
+      this.orderId,
+      this.correlationId,
       this.currentStep,
       this.status,
       nextCount,
       this.lastError,
       new Date(Date.now() + Saga.RETRY_TIMEOUT_MS * Math.pow(2, nextCount)),
-      this.createdAt, new Date(),
+      this.createdAt,
+      new Date(),
     );
   }
 

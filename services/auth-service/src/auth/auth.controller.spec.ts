@@ -83,9 +83,9 @@ describe('AuthController', () => {
     it('maps InvalidCredentialsError to UnauthorizedException', async () => {
       authService.login.mockRejectedValue(new InvalidCredentialsError());
 
-      await expect(
-        controller.login({ email: 'test@example.com', password: 'pass1234' } as LoginDto),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.login({ email: 'test@example.com', password: 'pass1234' } as LoginDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 
@@ -101,15 +101,17 @@ describe('AuthController', () => {
     it('maps InvalidRefreshTokenError to UnauthorizedException', async () => {
       authService.refresh.mockRejectedValue(new InvalidRefreshTokenError());
 
-      await expect(controller.refresh({ refreshToken: 'bad' } as RefreshTokenDto))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(controller.refresh({ refreshToken: 'bad' } as RefreshTokenDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
 
     it('maps RefreshTokenRevokedError to UnauthorizedException', async () => {
       authService.refresh.mockRejectedValue(new RefreshTokenRevokedError());
 
-      await expect(controller.refresh({ refreshToken: 'revoked' } as RefreshTokenDto))
-        .rejects.toThrow(UnauthorizedException);
+      await expect(controller.refresh({ refreshToken: 'revoked' } as RefreshTokenDto)).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 

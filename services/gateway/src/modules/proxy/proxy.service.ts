@@ -1,9 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  ServiceUnavailableException,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import CircuitBreaker from 'opossum';
 import { HEADERS, RequestUser } from '@nest-gateway/shared';
@@ -49,26 +44,17 @@ export class ProxyService implements OnModuleInit {
   onModuleInit() {
     // Initialise a circuit breaker for each service
     for (const [name, _url] of Object.entries(this.serviceUrls)) {
-      const breaker = new CircuitBreaker(
-        async (fn: () => Promise<Response>) => fn(),
-        {
-          name,
-          timeout: 5000,
-          errorThresholdPercentage: 50,
-          resetTimeout: 30000,
-          volumeThreshold: 5,
-        },
-      );
+      const breaker = new CircuitBreaker(async (fn: () => Promise<Response>) => fn(), {
+        name,
+        timeout: 5000,
+        errorThresholdPercentage: 50,
+        resetTimeout: 30000,
+        volumeThreshold: 5,
+      });
 
-      breaker.on('open', () =>
-        this.logger.warn(`Circuit breaker OPEN: ${name}`),
-      );
-      breaker.on('halfOpen', () =>
-        this.logger.log(`Circuit breaker HALF-OPEN: ${name}`),
-      );
-      breaker.on('close', () =>
-        this.logger.log(`Circuit breaker CLOSED: ${name}`),
-      );
+      breaker.on('open', () => this.logger.warn(`Circuit breaker OPEN: ${name}`));
+      breaker.on('halfOpen', () => this.logger.log(`Circuit breaker HALF-OPEN: ${name}`));
+      breaker.on('close', () => this.logger.log(`Circuit breaker CLOSED: ${name}`));
 
       this.breakers.set(name as ServiceName, breaker);
     }
@@ -94,11 +80,7 @@ export class ProxyService implements OnModuleInit {
     const status: Record<string, object> = {};
     for (const [name, breaker] of this.breakers) {
       status[name] = {
-        state: breaker.opened
-          ? 'open'
-          : breaker.halfOpen
-            ? 'half-open'
-            : 'closed',
+        state: breaker.opened ? 'open' : breaker.halfOpen ? 'half-open' : 'closed',
         stats: {
           fires: breaker.stats.fires,
           failures: breaker.stats.failures,
@@ -144,9 +126,7 @@ export class ProxyService implements OnModuleInit {
     } catch (err) {
       if ((err as Error).message?.includes('Breaker is open')) {
         this.logger.error(`Circuit breaker open for ${service}`);
-        throw new ServiceUnavailableException(
-          `${service} is temporarily unavailable`,
-        );
+        throw new ServiceUnavailableException(`${service} is temporarily unavailable`);
       }
       throw err;
     }

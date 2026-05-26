@@ -24,9 +24,7 @@ import { InternalGuard } from './guards/internal.guard';
       useFactory: (config: ConfigService) => ({
         stores: [
           new Keyv({
-            store: new KeyvRedis(
-              `redis://${config.get('REDIS_HOST', 'localhost')}:${config.get('REDIS_PORT', 6379)}`,
-            ),
+            store: new KeyvRedis(`redis://${config.get('REDIS_HOST', 'localhost')}:${config.get('REDIS_PORT', 6379)}`),
             namespace: 'ps',
           }),
         ],

@@ -48,16 +48,18 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
     try {
       await this.producer.send({
         topic,
-        messages: [{
-          key: envelope.correlationId || envelope.messageId,
-          value: JSON.stringify(envelope),
-          headers: {
-            'x-message-id': envelope.messageId,
-            'x-correlation-id': envelope.correlationId,
-            traceparent: envelope.traceparent,
-            tracestate: envelope.tracestate,
+        messages: [
+          {
+            key: envelope.correlationId || envelope.messageId,
+            value: JSON.stringify(envelope),
+            headers: {
+              'x-message-id': envelope.messageId,
+              'x-correlation-id': envelope.correlationId,
+              traceparent: envelope.traceparent,
+              tracestate: envelope.tracestate,
+            },
           },
-        }],
+        ],
       });
     } finally {
       span.end();

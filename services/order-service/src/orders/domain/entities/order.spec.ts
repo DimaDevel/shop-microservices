@@ -3,9 +3,16 @@ import { OrderItem } from './order-item';
 import { InvalidOrderTransitionError } from '../errors/orders.errors';
 
 const makeOrder = (status: OrderStatus = OrderStatus.PENDING): Order =>
-  new Order('order-1', 'user-1', 'user@example.com', status, 0, [
-    new OrderItem('item-1', 'prod-1', '', 2, 0),
-  ], new Date(), new Date());
+  new Order(
+    'order-1',
+    'user-1',
+    'user@example.com',
+    status,
+    0,
+    [new OrderItem('item-1', 'prod-1', '', 2, 0)],
+    new Date(),
+    new Date(),
+  );
 
 describe('Order', () => {
   describe('create', () => {

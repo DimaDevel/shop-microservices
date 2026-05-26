@@ -1,12 +1,4 @@
-import {
-  Controller,
-  Post,
-  Body,
-  Req,
-  Res,
-  HttpCode,
-  Logger,
-} from '@nestjs/common';
+import { Controller, Post, Body, Req, Res, HttpCode, Logger } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { Public, CurrentUser, RequestUser } from '@nest-gateway/shared';
 import { ProxyService } from './proxy.service';

@@ -1,10 +1,4 @@
-import {
-  Injectable,
-  Logger,
-  OnApplicationBootstrap,
-  OnModuleDestroy,
-  OnModuleInit,
-} from '@nestjs/common';
+import { Injectable, Logger, OnApplicationBootstrap, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Consumer, EachMessagePayload, Kafka } from 'kafkajs';
 import { context, propagation, SpanStatusCode, trace } from '@opentelemetry/api';
 import { KafkaDlqEnvelope, KafkaEnvelope } from './kafka.envelope';
@@ -12,9 +6,7 @@ import { KafkaModuleOptions, SubscribeOptions } from './kafka.options';
 import { KafkaProducerService } from './kafka.producer.service';
 
 @Injectable()
-export class KafkaConsumerService
-  implements OnModuleInit, OnApplicationBootstrap, OnModuleDestroy
-{
+export class KafkaConsumerService implements OnModuleInit, OnApplicationBootstrap, OnModuleDestroy {
   private readonly logger = new Logger(KafkaConsumerService.name);
   private consumer: Consumer;
   private readonly subscriptions: SubscribeOptions[] = [];
@@ -74,9 +66,7 @@ export class KafkaConsumerService
       traceparent: envelope.traceparent ?? '',
       tracestate: envelope.tracestate ?? '',
     });
-    const span = trace
-      .getTracer('kafka')
-      .startSpan(`consume ${topic}`, undefined, parentCtx);
+    const span = trace.getTracer('kafka').startSpan(`consume ${topic}`, undefined, parentCtx);
     const activeCtx = trace.setSpan(parentCtx, span);
 
     const maxRetries = sub.maxRetries ?? 3;
@@ -88,9 +78,7 @@ export class KafkaConsumerService
         return;
       } catch (err) {
         const msg = (err as Error).message;
-        this.logger.warn(
-          `[${envelope.correlationId}] ${topic} failed (attempt ${attempt}/${maxRetries}): ${msg}`,
-        );
+        this.logger.warn(`[${envelope.correlationId}] ${topic} failed (attempt ${attempt}/${maxRetries}): ${msg}`);
         if (attempt === maxRetries) {
           span.setStatus({ code: SpanStatusCode.ERROR, message: msg });
           span.end();
@@ -117,9 +105,7 @@ export class KafkaConsumerService
       });
       this.logger.error(`[${envelope.correlationId}] Sent to DLQ: ${dlqTopic}`);
     } catch (dlqErr) {
-      this.logger.error(
-        `[${envelope.correlationId}] DLQ send failed (${dlqTopic}): ${(dlqErr as Error).message}`,
-      );
+      this.logger.error(`[${envelope.correlationId}] DLQ send failed (${dlqTopic}): ${(dlqErr as Error).message}`);
     }
   }
 }

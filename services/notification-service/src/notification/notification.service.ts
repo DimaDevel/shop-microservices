@@ -17,7 +17,7 @@ export class NotificationService {
     if (!(await this.markSent(event.orderId, KAFKA_TOPICS.ORDER_CONFIRMED, event.correlationId))) return;
     this.logger.log(
       `[${event.correlationId}] [EMAIL] To: ${event.userEmail} | Subject: Order Confirmed #${event.orderId} | ` +
-      `Items: ${event.items.length} | Total: $${event.total.toFixed(2)}`,
+        `Items: ${event.items.length} | Total: $${event.total.toFixed(2)}`,
     );
   }
 
@@ -25,7 +25,7 @@ export class NotificationService {
     if (!(await this.markSent(event.orderId, KAFKA_TOPICS.ORDER_CANCELLED, event.correlationId))) return;
     this.logger.log(
       `[${event.correlationId}] [EMAIL] To: ${event.userEmail} | Subject: Order Cancelled #${event.orderId} | ` +
-      `Reason: ${event.reason}`,
+        `Reason: ${event.reason}`,
     );
   }
 
@@ -33,7 +33,7 @@ export class NotificationService {
     if (!(await this.markSent(event.orderId, KAFKA_TOPICS.PDF_GENERATED, event.correlationId))) return;
     this.logger.log(
       `[${event.correlationId}] [EMAIL] To: ${event.userEmail} | Subject: Your Order Receipt is Ready | ` +
-      `Order: #${event.orderId} | PDF: ${event.pdfPath}`,
+        `Order: #${event.orderId} | PDF: ${event.pdfPath}`,
     );
   }
 

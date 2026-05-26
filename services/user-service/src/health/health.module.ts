@@ -1,11 +1,6 @@
 import { Module } from '@nestjs/common';
 import { Controller, Get } from '@nestjs/common';
-import {
-  HealthCheck,
-  HealthCheckService,
-  TerminusModule,
-  TypeOrmHealthIndicator,
-} from '@nestjs/terminus';
+import { HealthCheck, HealthCheckService, TerminusModule, TypeOrmHealthIndicator } from '@nestjs/terminus';
 import { Public } from '@nest-gateway/shared';
 
 @Controller('health')
@@ -19,9 +14,7 @@ export class HealthController {
   @Get()
   @HealthCheck()
   check() {
-    return this.health.check([
-      () => this.db.pingCheck('database'),
-    ]);
+    return this.health.check([() => this.db.pingCheck('database')]);
   }
 }
 

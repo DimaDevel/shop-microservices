@@ -44,15 +44,9 @@ export class CreateOrderUseCase {
 
   async execute(input: CreateOrderInput): Promise<OrderResult> {
     return this.dataSource.transaction(async (manager) => {
-      const order = await this.orderRepo.save(
-        Order.create(input.userId, input.userEmail, input.items),
-        manager,
-      );
+      const order = await this.orderRepo.save(Order.create(input.userId, input.userEmail, input.items), manager);
 
-      const saga = await this.sagaRepo.save(
-        Saga.create(order.id, input.correlationId),
-        manager,
-      );
+      const saga = await this.sagaRepo.save(Saga.create(order.id, input.correlationId), manager);
 
       const command: ReserveStockCommand = {
         commandId: saga.id,

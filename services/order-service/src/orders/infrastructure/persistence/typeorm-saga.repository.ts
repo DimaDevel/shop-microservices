@@ -50,13 +50,16 @@ export class TypeOrmSagaRepository implements ISagaRepository {
 
   async update(saga: Saga, manager?: EntityManager): Promise<Saga> {
     const repo = manager?.getRepository(SagaStateOrmEntity) ?? this.repo;
-    await repo.update({ id: saga.id }, {
-      currentStep: saga.currentStep,
-      status: saga.status,
-      retryCount: saga.retryCount,
-      lastError: saga.lastError,
-      nextRetryAt: saga.nextRetryAt,
-    });
+    await repo.update(
+      { id: saga.id },
+      {
+        currentStep: saga.currentStep,
+        status: saga.status,
+        retryCount: saga.retryCount,
+        lastError: saga.lastError,
+        nextRetryAt: saga.nextRetryAt,
+      },
+    );
     return saga;
   }
 }

@@ -47,9 +47,9 @@ describe('InternalGuard', () => {
   it('throws UnauthorizedException when header value is incorrect', () => {
     reflector.getAllAndOverride.mockReturnValue(false);
 
-    expect(() =>
-      guard.canActivate(makeContext({ [HEADERS.INTERNAL_SECRET]: 'wrong-secret' })),
-    ).toThrow(UnauthorizedException);
+    expect(() => guard.canActivate(makeContext({ [HEADERS.INTERNAL_SECRET]: 'wrong-secret' }))).toThrow(
+      UnauthorizedException,
+    );
   });
 
   it('returns true when secret matches', () => {

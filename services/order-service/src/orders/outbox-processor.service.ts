@@ -42,7 +42,13 @@ export class OutboxProcessorService {
             if (retryCount >= this.maxRetries) {
               await this.outboxRepo.permanentlyFail(record.id, retryCount, (e as Error).message, manager);
             } else {
-              await this.outboxRepo.scheduleRetry(record.id, retryCount, (e as Error).message, new Date(Date.now() + delayMs), manager);
+              await this.outboxRepo.scheduleRetry(
+                record.id,
+                retryCount,
+                (e as Error).message,
+                new Date(Date.now() + delayMs),
+                manager,
+              );
             }
             this.logger.warn(`Outbox ${record.id} failed (attempt ${retryCount}): ${(e as Error).message}`);
           }

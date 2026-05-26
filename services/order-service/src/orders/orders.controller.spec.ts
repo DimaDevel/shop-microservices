@@ -6,7 +6,6 @@ import { GetOrderUseCase } from './application/use-cases/get-order.use-case';
 import { GetUserOrdersUseCase } from './application/use-cases/get-user-orders.use-case';
 import { OrderNotFoundError } from './domain/errors/orders.errors';
 import { OrderStatus } from './domain/entities/order';
-import { HEADERS } from '@nest-gateway/shared';
 
 const makeResult = (id = 'order-1') => ({
   id,
@@ -63,9 +62,9 @@ describe('OrdersController', () => {
     });
 
     it('throws UnauthorizedException when userId header is missing', async () => {
-      await expect(
-        controller.create({ items: [] } as any, '', 'user@example.com', 'corr-1'),
-      ).rejects.toThrow(UnauthorizedException);
+      await expect(controller.create({ items: [] } as any, '', 'user@example.com', 'corr-1')).rejects.toThrow(
+        UnauthorizedException,
+      );
     });
   });
 

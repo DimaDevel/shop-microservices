@@ -25,10 +25,7 @@ export class PaymentsService {
     private readonly paymentsRepo: Repository<PaymentEntity>,
   ) {}
 
-  async processPayment(
-    input: ProcessPaymentInput,
-    manager: EntityManager,
-  ): Promise<ProcessPaymentResult> {
+  async processPayment(input: ProcessPaymentInput, manager: EntityManager): Promise<ProcessPaymentResult> {
     const paymentRepository = manager.getRepository(PaymentEntity);
 
     const payment = await paymentRepository.save(
