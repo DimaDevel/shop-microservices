@@ -13,8 +13,10 @@ COPY services/payment-service/package.json ./services/payment-service/
 COPY services/pdf-service/package.json ./services/pdf-service/
 COPY services/notification-service/package.json ./services/notification-service/
 RUN npm ci --legacy-peer-deps
-COPY packages/shared/src ./packages/shared/src
+COPY packages/shared ./packages/shared
+RUN cd packages/shared && npx tsc
 COPY packages/kafka ./packages/kafka
+RUN cd packages/kafka && npx tsc
 COPY services/auth-service/src ./services/auth-service/src
 COPY services/auth-service/tsconfig.json ./services/auth-service/
 RUN cd services/auth-service && npx nest build
@@ -23,6 +25,9 @@ FROM node:22-alpine
 WORKDIR /app
 COPY --from=builder /app/services/auth-service/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/kafka ./packages/kafka
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY packages/shared/package.json ./packages/shared/
+COPY --from=builder /app/packages/kafka/dist ./packages/kafka/dist
+COPY packages/kafka/package.json ./packages/kafka/
 EXPOSE 3001
 CMD ["node", "dist/main"]

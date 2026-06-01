@@ -13,7 +13,8 @@ COPY services/payment-service/package.json ./services/payment-service/
 COPY services/pdf-service/package.json ./services/pdf-service/
 COPY services/notification-service/package.json ./services/notification-service/
 RUN npm ci --legacy-peer-deps
-COPY packages/shared/src ./packages/shared/src
+COPY packages/shared ./packages/shared
+RUN cd packages/shared && npx tsc
 COPY services/gateway/src ./services/gateway/src
 COPY services/gateway/tsconfig.json ./services/gateway/
 RUN cd services/gateway && npx nest build
@@ -22,5 +23,7 @@ FROM node:22-alpine
 WORKDIR /app
 COPY --from=builder /app/services/gateway/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY packages/shared/package.json ./packages/shared/
 EXPOSE 3000
 CMD ["node", "dist/main"]

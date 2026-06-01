@@ -18,9 +18,17 @@
     "forceConsistentCasingInFileNames": true,
     "noFallthroughCasesInSwitch": true,
     "paths": {
-      "@nest-gateway/shared": ["../../packages/shared/src"]
+      "@nest-gateway/shared": [
+        "../../packages/shared/dist",
+        "../../packages/shared/src"
+      ]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

@@ -18,10 +18,21 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "paths": {
-      "@nest-gateway/shared": ["../../packages/shared/src"],
-      "@nest-gateway/kafka": ["../../packages/kafka/src"]
+      "@nest-gateway/shared": [
+        "../../packages/shared/dist",
+        "../../packages/shared/src"
+      ],
+      "@nest-gateway/kafka": [
+        "../../packages/kafka/dist",
+        "../../packages/kafka/src"
+      ]
     }
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }
