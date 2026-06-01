@@ -48,3 +48,6 @@ kafka-data/
 *.pem
 *.key
 *.cert
+
+# ── npm config (may contain auth tokens) ─────────────────────────────────────
+.npmrc
