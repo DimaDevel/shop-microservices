@@ -1,4 +1,4 @@
-import { Injectable, Inject } from '@nestjs/common';
+import { Injectable, Inject, Logger } from '@nestjs/common';
 import { PassportStrategy } from '@nestjs/passport';
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { ConfigService } from '@nestjs/config';
@@ -8,6 +8,8 @@ import { JwtPayload, RequestUser } from '@nest-gateway/shared';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
+  private readonly logger = new Logger(JwtStrategy.name);
+
   constructor(
     config: ConfigService,
     @Inject(CACHE_MANAGER) private readonly cache: Cache,
@@ -25,9 +27,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     try {
       const cached = await this.cache.get<RequestUser>(key);
       if (cached) return cached;
-    } catch {
-      //TODO: Handle error and log it
-      /* Redis unavailable – fall through */
+    } catch (err: unknown) {
+      this.logger.warn(`Redis cache read failed for key ${key}: ${(err as Error).message}`);
     }
 
     const user: RequestUser = {
@@ -40,9 +41,8 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     if (ttlMs > 0) {
       try {
         await this.cache.set(key, user, ttlMs);
-      } catch {
-        //TODO: Handle error and log it
-        /* Redis unavailable – non-fatal, token still valid */
+      } catch (err: unknown) {
+        this.logger.warn(`Redis cache write failed for key ${key}: ${(err as Error).message}`);
       }
     }
 
