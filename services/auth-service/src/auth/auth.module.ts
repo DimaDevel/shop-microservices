@@ -5,10 +5,13 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { AuthService } from './auth.service';
 import { AuthController } from './auth.controller';
 import { UserEntity } from '../users/user.entity';
+import { AuthOutboxEntity } from './auth-outbox.entity';
+import { AuthOutboxService } from './auth-outbox.service';
+import { AuthOutboxProcessorService } from './auth-outbox-processor.service';
 
 @Module({
   imports: [
-    TypeOrmModule.forFeature([UserEntity]),
+    TypeOrmModule.forFeature([UserEntity, AuthOutboxEntity]),
     JwtModule.registerAsync({
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
@@ -18,7 +21,7 @@ import { UserEntity } from '../users/user.entity';
       inject: [ConfigService],
     }),
   ],
-  providers: [AuthService],
+  providers: [AuthService, AuthOutboxService, AuthOutboxProcessorService],
   controllers: [AuthController],
 })
 export class AuthModule {}

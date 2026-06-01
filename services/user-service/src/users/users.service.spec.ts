@@ -13,6 +13,12 @@ const makeProfile = (overrides: Partial<ProfileEntity> = {}): ProfileEntity =>
     email: 'user@example.com',
     name: 'Test User',
     avatarUrl: null,
+    phone: null,
+    dateOfBirth: null,
+    addressLine: null,
+    city: null,
+    country: null,
+    postalCode: null,
     isActive: true,
     createdAt: now,
     updatedAt: now,
@@ -109,6 +115,20 @@ describe('UsersService', () => {
         ForbiddenException,
       );
     });
+
+    it('updates extended profile fields (phone, dateOfBirth, address)', async () => {
+      const profile = makeProfile();
+      const input = { phone: '+380501234567', dateOfBirth: '1990-05-15', city: 'Kyiv', country: 'UA', postalCode: '01001' };
+      const updated = { ...profile, ...input };
+      profilesRepo.findOne.mockResolvedValue(profile);
+      profilesRepo.save.mockResolvedValue(updated);
+
+      const result = await service.update('uuid-1', input, 'uuid-1', [Role.USER]);
+
+      expect(result.phone).toBe('+380501234567');
+      expect(result.city).toBe('Kyiv');
+      expect(result.country).toBe('UA');
+    });
   });
 
   describe('remove', () => {
@@ -134,14 +154,26 @@ describe('UsersService', () => {
   });
 
   describe('createProfile', () => {
-    it('creates and returns a new profile', async () => {
+    it('creates and returns a new profile when none exists', async () => {
       const profile = makeProfile();
+      profilesRepo.findOne.mockResolvedValue(null);
       profilesRepo.create.mockReturnValue(profile);
       profilesRepo.save.mockResolvedValue(profile);
 
       const result = await service.createProfile('uuid-1', 'user@example.com');
 
       expect(profilesRepo.create).toHaveBeenCalledWith({ id: 'uuid-1', email: 'user@example.com' });
+      expect(result).toMatchObject({ id: 'uuid-1', email: 'user@example.com' });
+    });
+
+    it('returns the existing profile without inserting when called again (idempotency)', async () => {
+      const existing = makeProfile();
+      profilesRepo.findOne.mockResolvedValue(existing);
+
+      const result = await service.createProfile('uuid-1', 'user@example.com');
+
+      expect(profilesRepo.create).not.toHaveBeenCalled();
+      expect(profilesRepo.save).not.toHaveBeenCalled();
       expect(result).toMatchObject({ id: 'uuid-1', email: 'user@example.com' });
     });
   });

@@ -120,3 +120,8 @@ export interface PdfGeneratedEvent {
   pdfPath: string;
   createdAt: string;
 }
+
+export interface UserRegisteredEvent {
+  userId: string;
+  email: string;
+}

@@ -62,6 +62,8 @@ export class UsersService {
   }
 
   async createProfile(id: string, email: string): Promise<ProfileResult> {
+    const existing = await this.profilesRepo.findOne({ where: { id } });
+    if (existing) return this.toResult(existing);
     const profile = this.profilesRepo.create({ id, email });
     return this.toResult(await this.profilesRepo.save(profile));
   }
@@ -72,6 +74,12 @@ export class UsersService {
       email: profile.email,
       name: profile.name,
       avatarUrl: profile.avatarUrl,
+      phone: profile.phone,
+      dateOfBirth: profile.dateOfBirth,
+      addressLine: profile.addressLine,
+      city: profile.city,
+      country: profile.country,
+      postalCode: profile.postalCode,
       isActive: profile.isActive,
       createdAt: profile.createdAt,
       updatedAt: profile.updatedAt,

@@ -32,4 +32,7 @@ export const KAFKA_TOPICS = {
 
   // PDF pipeline (choreography)
   PDF_GENERATED: 'pdf.pdf-generated',
+
+  // User lifecycle events
+  USER_REGISTERED: 'users.user-registered',
 } as const;

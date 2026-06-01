@@ -1,12 +1,10 @@
-import { Controller, Post, Body, Req, Res, HttpCode, Logger } from '@nestjs/common';
+import { Controller, Post, Body, Req, Res, HttpCode } from '@nestjs/common';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { Public, CurrentUser, RequestUser } from '@nest-gateway/shared';
 import { ProxyService } from './proxy.service';
 
 @Controller('auth')
 export class AuthProxyController {
-  private readonly logger = new Logger(AuthProxyController.name);
-
   constructor(private readonly proxyService: ProxyService) {}
 
   @Public()
@@ -41,20 +39,6 @@ export class AuthProxyController {
       body,
       correlationId: req.correlationId,
     });
-
-    if (status === 201) {
-      const { userId, email } = data as { userId: string; email: string };
-      try {
-        await this.proxyService.proxyToUsers({
-          method: 'POST',
-          path: '/users',
-          body: { id: userId, email },
-          correlationId: req.correlationId,
-        });
-      } catch (err) {
-        this.logger.error(`Failed to create profile for user ${userId}: ${(err as Error).message}`);
-      }
-    }
 
     return res.status(status).send(data);
   }

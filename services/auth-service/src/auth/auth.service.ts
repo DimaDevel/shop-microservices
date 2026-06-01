@@ -1,12 +1,12 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository } from 'typeorm';
+import { DataSource, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
 import { createHash } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from '../users/user.entity';
-import { JwtPayload, Role } from '@nest-gateway/shared';
+import { JwtPayload, KAFKA_TOPICS, Role, UserRegisteredEvent } from '@nest-gateway/shared';
 import { LoginInput, RegisterInput } from './auth.inputs';
 import { TokensResult } from './auth.outputs';
 import {
@@ -15,6 +15,7 @@ import {
   InvalidRefreshTokenError,
   RefreshTokenRevokedError,
 } from './auth.errors';
+import { AuthOutboxService } from './auth-outbox.service';
 
 @Injectable()
 export class AuthService {
@@ -25,24 +26,36 @@ export class AuthService {
     private readonly usersRepo: Repository<UserEntity>,
     private readonly jwtService: JwtService,
     private readonly config: ConfigService,
+    private readonly dataSource: DataSource,
+    private readonly outboxService: AuthOutboxService,
   ) {}
 
   async register(input: RegisterInput): Promise<TokensResult> {
-    const exists = await this.usersRepo.findOne({ where: { email: input.email } });
-    if (exists) {
-      throw new EmailAlreadyTakenError();
+    const passwordHash = await bcrypt.hash(input.password, 12);
+
+    let user: UserEntity;
+    try {
+      user = await this.dataSource.transaction(async (manager) => {
+        const newUser = manager.create(UserEntity, {
+          email: input.email,
+          passwordHash,
+          roles: [Role.USER],
+        });
+        const saved = await manager.save(newUser);
+
+        const event: UserRegisteredEvent = { userId: saved.id, email: saved.email };
+        await this.outboxService.write(manager, saved.id, KAFKA_TOPICS.USER_REGISTERED, saved.id, event);
+
+        return saved;
+      });
+    } catch (err: unknown) {
+      if ((err as NodeJS.ErrnoException & { code?: string })?.code === '23505') {
+        throw new EmailAlreadyTakenError();
+      }
+      throw err;
     }
 
-    const passwordHash = await bcrypt.hash(input.password, 12);
-    const user = this.usersRepo.create({
-      email: input.email,
-      passwordHash,
-      roles: [Role.USER],
-    });
-
-    await this.usersRepo.save(user);
     this.logger.log(`New user registered: ${user.email}`);
-
     return this.issueTokens(user);
   }
 

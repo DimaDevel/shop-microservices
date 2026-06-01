@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { UsersController } from './users.controller';
 import { UsersService } from './users.service';
-import { UpdateUserDto, CreateProfileDto } from './users.dto';
+import { UpdateUserDto } from './users.dto';
 import { ProfileResult } from './users.outputs';
 import { Role } from '@nest-gateway/shared';
 
@@ -46,18 +46,6 @@ describe('UsersController', () => {
     });
   });
 
-  describe('createUser', () => {
-    it('delegates to service.createProfile', async () => {
-      usersService.createProfile.mockResolvedValue(mockProfile);
-      const dto: CreateProfileDto = { id: 'uuid-1', email: 'user@example.com' };
-
-      const result = await controller.createUser(dto);
-
-      expect(usersService.createProfile).toHaveBeenCalledWith('uuid-1', 'user@example.com');
-      expect(result).toBe(mockProfile);
-    });
-  });
-
   describe('getUser', () => {
     it('passes parsed roles to service.findById', async () => {
       usersService.findById.mockResolvedValue(mockProfile);
@@ -85,15 +73,46 @@ describe('UsersController', () => {
   });
 
   describe('updateUser', () => {
-    it('maps dto to input and delegates to service.update', async () => {
+    it('maps basic dto fields to input and delegates to service.update', async () => {
       usersService.update.mockResolvedValue(mockProfile);
       const dto: UpdateUserDto = { name: 'New Name' };
 
       await controller.updateUser('uuid-1', dto, 'uuid-1', 'user');
 
-      expect(usersService.update).toHaveBeenCalledWith('uuid-1', { name: 'New Name', avatarUrl: undefined }, 'uuid-1', [
-        Role.USER,
-      ]);
+      expect(usersService.update).toHaveBeenCalledWith(
+        'uuid-1',
+        expect.objectContaining({ name: 'New Name' }),
+        'uuid-1',
+        [Role.USER],
+      );
+    });
+
+    it('maps extended profile fields (phone, dateOfBirth, address) to input', async () => {
+      usersService.update.mockResolvedValue(mockProfile);
+      const dto: UpdateUserDto = {
+        phone: '+380501234567',
+        dateOfBirth: '1990-05-15',
+        addressLine: '123 Main St',
+        city: 'Kyiv',
+        country: 'UA',
+        postalCode: '01001',
+      };
+
+      await controller.updateUser('uuid-1', dto, 'uuid-1', 'user');
+
+      expect(usersService.update).toHaveBeenCalledWith(
+        'uuid-1',
+        expect.objectContaining({
+          phone: '+380501234567',
+          dateOfBirth: '1990-05-15',
+          addressLine: '123 Main St',
+          city: 'Kyiv',
+          country: 'UA',
+          postalCode: '01001',
+        }),
+        'uuid-1',
+        [Role.USER],
+      );
     });
   });
 

@@ -2,8 +2,10 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { JwtService } from '@nestjs/jwt';
 import { ConfigService } from '@nestjs/config';
+import { DataSource } from 'typeorm';
 import * as bcrypt from 'bcrypt';
 import { AuthService } from './auth.service';
+import { AuthOutboxService } from './auth-outbox.service';
 import { UserEntity } from '../users/user.entity';
 import { Role } from '@nest-gateway/shared';
 import {
@@ -33,12 +35,20 @@ describe('AuthService', () => {
   let usersRepo: Record<string, jest.Mock>;
   let jwtService: jest.Mocked<JwtService>;
   let configService: jest.Mocked<ConfigService>;
+  let dataSource: jest.Mocked<DataSource>;
+  let outboxService: jest.Mocked<AuthOutboxService>;
 
   const mockQb = {
     addSelect: jest.fn().mockReturnThis(),
     where: jest.fn().mockReturnThis(),
     andWhere: jest.fn().mockReturnThis(),
     getOne: jest.fn(),
+  };
+
+  // Simulate EntityManager passed to transaction callback
+  const mockManager = {
+    create: jest.fn(),
+    save: jest.fn(),
   };
 
   beforeEach(async () => {
@@ -50,18 +60,22 @@ describe('AuthService', () => {
       createQueryBuilder: jest.fn().mockReturnValue(mockQb),
     };
 
+    dataSource = {
+      transaction: jest.fn().mockImplementation(async (cb) => cb(mockManager)),
+    } as unknown as jest.Mocked<DataSource>;
+
+    outboxService = {
+      write: jest.fn().mockResolvedValue(undefined),
+    } as unknown as jest.Mocked<AuthOutboxService>;
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: getRepositoryToken(UserEntity), useValue: usersRepo },
-        {
-          provide: JwtService,
-          useValue: { signAsync: jest.fn(), verify: jest.fn() },
-        },
-        {
-          provide: ConfigService,
-          useValue: { getOrThrow: jest.fn(), get: jest.fn() },
-        },
+        { provide: JwtService, useValue: { signAsync: jest.fn(), verify: jest.fn() } },
+        { provide: ConfigService, useValue: { getOrThrow: jest.fn(), get: jest.fn() } },
+        { provide: DataSource, useValue: dataSource },
+        { provide: AuthOutboxService, useValue: outboxService },
       ],
     }).compile();
 
@@ -86,17 +100,17 @@ describe('AuthService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('register', () => {
-    it('hashes password, saves user, and returns tokens', async () => {
+    it('hashes password, saves user via transaction, writes outbox, and returns tokens', async () => {
       const user = makeUser();
-      usersRepo.findOne.mockResolvedValue(null);
-      usersRepo.create.mockReturnValue(user);
-      usersRepo.save.mockResolvedValue(user);
+      mockManager.create.mockReturnValue(user);
+      mockManager.save.mockResolvedValue(user);
       usersRepo.update.mockResolvedValue(undefined);
 
       const result = await service.register({ email: 'test@example.com', password: 'pass1234' });
 
-      expect(usersRepo.findOne).toHaveBeenCalledWith({ where: { email: 'test@example.com' } });
       expect(bcrypt.hash).toHaveBeenCalledWith('pass1234', 12);
+      expect(dataSource.transaction).toHaveBeenCalledTimes(1);
+      expect(outboxService.write).toHaveBeenCalledTimes(1);
       expect(result).toMatchObject({
         accessToken: 'signed-token',
         refreshToken: 'signed-token',
@@ -105,19 +119,27 @@ describe('AuthService', () => {
       });
     });
 
-    it('throws EmailAlreadyTakenError when email exists', async () => {
-      usersRepo.findOne.mockResolvedValue(makeUser());
+    it('throws EmailAlreadyTakenError on PG unique violation (23505)', async () => {
+      const pgError = Object.assign(new Error('duplicate key'), { code: '23505' });
+      (dataSource.transaction as jest.Mock).mockRejectedValue(pgError);
 
       await expect(service.register({ email: 'test@example.com', password: 'pass1234' })).rejects.toThrow(
         EmailAlreadyTakenError,
       );
     });
 
+    it('rethrows non-duplicate errors from the transaction', async () => {
+      (dataSource.transaction as jest.Mock).mockRejectedValue(new Error('db connection lost'));
+
+      await expect(service.register({ email: 'test@example.com', password: 'pass1234' })).rejects.toThrow(
+        'db connection lost',
+      );
+    });
+
     it('rethrows when JWT signing fails', async () => {
       const user = makeUser();
-      usersRepo.findOne.mockResolvedValue(null);
-      usersRepo.create.mockReturnValue(user);
-      usersRepo.save.mockResolvedValue(user);
+      mockManager.create.mockReturnValue(user);
+      mockManager.save.mockResolvedValue(user);
       (jwtService.signAsync as jest.Mock).mockRejectedValue(new Error('jwt lib error'));
 
       await expect(service.register({ email: 'test@example.com', password: 'pass1234' })).rejects.toThrow(

@@ -1,6 +1,6 @@
-import { Controller, Get, Post, Patch, Delete, Param, Body, Headers } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Body, Headers } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto, CreateProfileDto } from './users.dto';
+import { UpdateUserDto } from './users.dto';
 import { UpdateProfileInput } from './users.inputs';
 import { HEADERS, Role, Public } from '@nest-gateway/shared';
 
@@ -12,11 +12,6 @@ export class UsersController {
   @Get('health')
   health() {
     return { status: 'ok', service: 'user-service' };
-  }
-
-  @Post()
-  createUser(@Body() dto: CreateProfileDto) {
-    return this.usersService.createProfile(dto.id, dto.email);
   }
 
   @Get(':id')
@@ -35,7 +30,16 @@ export class UsersController {
     @Headers(HEADERS.USER_ID) requesterId: string,
     @Headers(HEADERS.USER_ROLES) rolesHeader: string,
   ) {
-    const input: UpdateProfileInput = { name: dto.name, avatarUrl: dto.avatarUrl };
+    const input: UpdateProfileInput = {
+      name: dto.name,
+      avatarUrl: dto.avatarUrl,
+      phone: dto.phone,
+      dateOfBirth: dto.dateOfBirth,
+      addressLine: dto.addressLine,
+      city: dto.city,
+      country: dto.country,
+      postalCode: dto.postalCode,
+    };
     return this.usersService.update(id, input, requesterId, this.parseRoles(rolesHeader));
   }
 
