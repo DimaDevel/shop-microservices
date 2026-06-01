@@ -1,19 +1,33 @@
-FROM node:20-alpine AS builder
+FROM node:22-alpine AS builder
+RUN npm install -g npm@11.6.2 --quiet
 WORKDIR /app
-COPY package*.json ./
+COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/kafka/package.json ./packages/kafka/
+COPY services/gateway/package.json ./services/gateway/
+COPY services/auth-service/package.json ./services/auth-service/
+COPY services/user-service/package.json ./services/user-service/
+COPY services/product-service/package.json ./services/product-service/
+COPY services/order-service/package.json ./services/order-service/
 COPY services/payment-service/package.json ./services/payment-service/
-RUN npm install
+COPY services/pdf-service/package.json ./services/pdf-service/
+COPY services/notification-service/package.json ./services/notification-service/
+RUN npm ci --legacy-peer-deps
 COPY packages/shared ./packages/shared
+RUN cd packages/shared && npx tsc
 COPY packages/kafka ./packages/kafka
-COPY services/payment-service ./services/payment-service
-RUN npm run build --prefix services/payment-service
+RUN cd packages/kafka && npx tsc
+COPY services/payment-service/src ./services/payment-service/src
+COPY services/payment-service/tsconfig.json ./services/payment-service/
+RUN cd services/payment-service && npx nest build
 
-FROM node:20-alpine
+FROM node:22-alpine
 WORKDIR /app
-COPY --from=builder /app/node_modules ./node_modules
-COPY --from=builder /app/packages/shared ./packages/shared
-COPY --from=builder /app/packages/kafka ./packages/kafka
 COPY --from=builder /app/services/payment-service/dist ./dist
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
+COPY packages/shared/package.json ./packages/shared/
+COPY --from=builder /app/packages/kafka/dist ./packages/kafka/dist
+COPY packages/kafka/package.json ./packages/kafka/
+EXPOSE 3007
 CMD ["node", "dist/main"]
