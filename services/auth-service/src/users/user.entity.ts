@@ -26,7 +26,7 @@ export class UserEntity {
   })
   roles: Role[];
 
-  @Column({ nullable: true })
+  @Column({ type: 'text', nullable: true })
   refreshToken?: string | null;
 
   @Column({ default: true })

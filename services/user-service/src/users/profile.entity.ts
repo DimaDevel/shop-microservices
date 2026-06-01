@@ -10,13 +10,13 @@ export class ProfileEntity {
   @Column({ unique: true })
   email: string;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   name?: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   avatarUrl?: string | null;
 
-  @Column({ nullable: true })
+  @Column({ type: 'varchar', nullable: true })
   phone?: string | null;
 
   @Column({ type: 'date', nullable: true })
