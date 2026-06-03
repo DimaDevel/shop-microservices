@@ -13,7 +13,11 @@
     "format": "prettier --write \"{services,packages}/**/*.ts\"",
     "format:check": "prettier --check \"{services,packages}/**/*.ts\"",
     "docker:up": "docker-compose up --build",
-    "docker:down": "docker-compose down"
+    "docker:down": "docker-compose down",
+    "test:e2e": "jest --config test/e2e/jest.e2e.config.js --forceExit",
+    "test:integration:auth": "jest --config services/auth-service/jest.integration.config.js --forceExit",
+    "test:integration:products": "jest --config services/product-service/jest.integration.config.js --forceExit",
+    "test:integration": "npm run test:integration:auth && npm run test:integration:products"
   },
   "devDependencies": {
     "concurrently": "^8.2.0",

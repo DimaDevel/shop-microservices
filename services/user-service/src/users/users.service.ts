@@ -43,7 +43,8 @@ export class UsersService {
       throw new ForbiddenException('Access denied');
     }
 
-    Object.assign(profile, input);
+    const defined = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+    Object.assign(profile, defined);
     return this.toResult(await this.profilesRepo.save(profile));
   }
 

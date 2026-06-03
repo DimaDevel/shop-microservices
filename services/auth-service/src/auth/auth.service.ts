@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt';
 import { InjectRepository } from '@nestjs/typeorm';
 import { DataSource, Repository } from 'typeorm';
 import { ConfigService } from '@nestjs/config';
-import { createHash } from 'crypto';
+import { createHash, randomUUID } from 'crypto';
 import * as bcrypt from 'bcrypt';
 import { UserEntity } from '../users/user.entity';
 import { JwtPayload, KAFKA_TOPICS, Role, UserRegisteredEvent } from '@nest-gateway/shared';
@@ -108,6 +108,7 @@ export class AuthService {
       sub: user.id,
       email: user.email,
       roles: user.roles,
+      jti: randomUUID(),
     };
 
     const accessExpiresIn = parseInt(this.config.getOrThrow('JWT_ACCESS_EXPIRES_IN'), 10) || 3600;
