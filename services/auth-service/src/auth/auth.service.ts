@@ -110,8 +110,8 @@ export class AuthService {
       roles: user.roles,
     };
 
-    const accessExpiresIn = this.config.getOrThrow<number>('JWT_ACCESS_EXPIRES_IN', 3600);
-    const refreshExpiresIn = this.config.getOrThrow<number>('JWT_REFRESH_EXPIRES_IN', 604800);
+    const accessExpiresIn = parseInt(this.config.getOrThrow('JWT_ACCESS_EXPIRES_IN'), 10) || 3600;
+    const refreshExpiresIn = parseInt(this.config.getOrThrow('JWT_REFRESH_EXPIRES_IN'), 10) || 604800;
 
     let accessToken: string;
     let refreshToken: string;

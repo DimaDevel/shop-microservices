@@ -8,10 +8,12 @@ import {
   MemoryHealthIndicator,
   TerminusModule,
 } from '@nestjs/terminus';
+import { ApiTags, ApiOperation, ApiResponse } from '@nestjs/swagger';
 import { Public } from '@nest-gateway/shared';
 import { ProxyModule } from '../proxy/proxy.module';
 import { ProxyService } from '../proxy/proxy.service';
 
+@ApiTags('Health')
 @Controller('health')
 export class HealthController {
   constructor(
@@ -23,6 +25,9 @@ export class HealthController {
   @Public()
   @Get()
   @HealthCheck()
+  @ApiOperation({ summary: 'Service health check', description: 'Reports memory heap usage and circuit breaker state for each downstream service.' })
+  @ApiResponse({ status: 200, description: 'All services healthy' })
+  @ApiResponse({ status: 503, description: 'One or more circuit breakers are open' })
   check() {
     return this.health.check([
       () => this.memory.checkHeap('memory_heap', 300 * 1024 * 1024),

@@ -2,6 +2,7 @@ import { NestFactory } from '@nestjs/core';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
 import type { IncomingMessage } from 'http';
 import { ValidationPipe, Logger } from '@nestjs/common';
+import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
 
 async function bootstrap() {
@@ -30,10 +31,22 @@ async function bootstrap() {
     }),
   );
 
+  const swaggerConfig = new DocumentBuilder()
+    .setTitle('Nest Gateway API')
+    .setDescription(
+      'Public API gateway. All protected endpoints require a Bearer JWT token obtained from `POST /auth/login`.',
+    )
+    .setVersion('1.0')
+    .addBearerAuth()
+    .build();
+  const document = SwaggerModule.createDocument(app, swaggerConfig);
+  SwaggerModule.setup('api', app, document);
+
   const port = process.env.PORT ?? 3000;
   const host = process.env.HOST ?? '0.0.0.0'; // New: Configurable host with default
   await app.listen(port, host);
   logger.log(`Gateway running on http://${host}:${port}`); // Updated: Include host in log
+  logger.log(`Swagger UI available at http://${host}:${port}/api`);
 }
 
 bootstrap();

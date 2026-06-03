@@ -16,7 +16,7 @@ import { AuthOutboxProcessorService } from './auth-outbox-processor.service';
       imports: [ConfigModule],
       useFactory: (config: ConfigService) => ({
         secret: config.getOrThrow<string>('JWT_SECRET'),
-        signOptions: { expiresIn: config.get<number>('JWT_ACCESS_EXPIRES_IN', 3600) },
+        signOptions: { expiresIn: parseInt(config.get('JWT_ACCESS_EXPIRES_IN', '3600'), 10) },
       }),
       inject: [ConfigService],
     }),

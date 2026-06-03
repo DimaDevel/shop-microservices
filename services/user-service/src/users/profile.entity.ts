@@ -22,16 +22,16 @@ export class ProfileEntity {
   @Column({ type: 'date', nullable: true })
   dateOfBirth?: Date | null;
 
-  @Column({ nullable: true, length: 200 })
+  @Column({ type: 'varchar', nullable: true, length: 200 })
   addressLine?: string | null;
 
-  @Column({ nullable: true, length: 100 })
+  @Column({ type: 'varchar', nullable: true, length: 100 })
   city?: string | null;
 
-  @Column({ nullable: true, length: 2 })
+  @Column({ type: 'varchar', nullable: true, length: 2 })
   country?: string | null;
 
-  @Column({ nullable: true, length: 20 })
+  @Column({ type: 'varchar', nullable: true, length: 20 })
   postalCode?: string | null;
 
   @Column({ default: true })

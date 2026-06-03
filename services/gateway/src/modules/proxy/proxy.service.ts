@@ -1,4 +1,4 @@
-import { Injectable, Logger, ServiceUnavailableException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException, BadGatewayException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import CircuitBreaker from 'opossum';
 import { HEADERS, RequestUser } from '@nest-gateway/shared';
@@ -110,25 +110,34 @@ export class ProxyService implements OnModuleInit {
       ...headers,
     };
 
+    let response: Response;
     try {
-      const response = await breaker.fire(() =>
+      response = await breaker.fire(() =>
         fetch(url, {
           method,
           headers: proxyHeaders,
           body: body ? JSON.stringify(body) : undefined,
         }),
-      );
-
-      return {
-        status: (response as Response).status,
-        data: await (response as Response).json(),
-      };
+      ) as Response;
     } catch (err) {
-      if ((err as Error).message?.includes('Breaker is open')) {
-        this.logger.error(`Circuit breaker open for ${service}`);
+      const error = err as Error & { code?: string };
+      if (error.code === 'EOPENBREAKER' || error.message?.includes('Breaker is open')) {
+        this.logger.warn(`Circuit breaker open for ${service}`);
         throw new ServiceUnavailableException(`${service} is temporarily unavailable`);
       }
-      throw err;
+      // Network-level failure: service is down or unreachable
+      this.logger.error(`Cannot reach ${service} at ${url}: ${error.message}`);
+      throw new ServiceUnavailableException(`${service} is unreachable`);
     }
+
+    let data: unknown;
+    try {
+      data = await response.json();
+    } catch {
+      this.logger.error(`${service} returned non-JSON response (status ${response.status})`);
+      throw new BadGatewayException(`${service} returned an invalid response`);
+    }
+
+    return { status: response.status, data };
   }
 }
