@@ -117,6 +117,6 @@ export class ProductsProxyController {
       user,
       correlationId: req.correlationId,
     });
-    return res.status(status).send(data);
+    return status === 204 ? res.status(204).send() : res.status(status).send(data);
   }
 }

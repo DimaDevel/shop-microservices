@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, Req, Res } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Body, Req, Res, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CurrentUser, Roles, Role, RequestUser } from '@nest-gateway/shared';
@@ -11,6 +11,23 @@ import { ApiErrorDto } from '../../swagger/common.dto';
 @Controller('users')
 export class UsersProxyController {
   constructor(private readonly proxy: ProxyService) {}
+
+  @Get('me')
+  @ApiOperation({ summary: 'Get own profile' })
+  @ApiResponse({ status: 200, description: 'Own user profile', type: UserProfileDto })
+  async getMe(
+    @CurrentUser() user: RequestUser,
+    @Req() req: FastifyRequest & { correlationId?: string },
+    @Res() res: FastifyReply,
+  ) {
+    const { status, data } = await this.proxy.proxyToUsers({
+      method: 'GET',
+      path: `/users/${user.id}`,
+      user,
+      correlationId: req.correlationId,
+    });
+    return res.status(status).send(data);
+  }
 
   @Get(':id')
   @ApiOperation({ summary: 'Get a user profile by ID' })

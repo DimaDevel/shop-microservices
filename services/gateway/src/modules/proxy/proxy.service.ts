@@ -1,4 +1,4 @@
-import { Injectable, Logger, ServiceUnavailableException, BadGatewayException, OnModuleInit } from '@nestjs/common';
+import { Injectable, Logger, ServiceUnavailableException, BadGatewayException, HttpException, OnModuleInit } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import CircuitBreaker from 'opossum';
 import { HEADERS, RequestUser } from '@nest-gateway/shared';
@@ -99,7 +99,7 @@ export class ProxyService implements OnModuleInit {
     const breaker = this.breakers.get(service)!;
 
     const proxyHeaders: Record<string, string> = {
-      'content-type': 'application/json',
+      ...(body ? { 'content-type': 'application/json' } : {}),
       [HEADERS.INTERNAL_SECRET]: this.config.getOrThrow<string>('INTERNAL_SECRET'),
       ...(correlationId && { [HEADERS.CORRELATION_ID]: correlationId }),
       ...(user && {
@@ -130,12 +130,18 @@ export class ProxyService implements OnModuleInit {
       throw new ServiceUnavailableException(`${service} is unreachable`);
     }
 
-    let data: unknown;
-    try {
-      data = await response.json();
-    } catch {
-      this.logger.error(`${service} returned non-JSON response (status ${response.status})`);
-      throw new BadGatewayException(`${service} returned an invalid response`);
+    let data: unknown = null;
+    if (response.status !== 204 && response.headers.get('content-length') !== '0') {
+      try {
+        data = await response.json();
+      } catch {
+        this.logger.error(`${service} returned non-JSON response (status ${response.status})`);
+        throw new BadGatewayException(`${service} returned an invalid response`);
+      }
+    }
+
+    if (response.status >= 400) {
+      throw new HttpException(data ?? response.statusText, response.status);
     }
 
     return { status: response.status, data };

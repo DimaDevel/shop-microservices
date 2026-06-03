@@ -70,14 +70,15 @@ export class ProductsService {
   async update(id: string, input: UpdateProductInput): Promise<ProductResult> {
     const product = await this.productsRepo.findOne({ where: { id, isActive: true } });
     if (!product) throw new ProductNotFoundError(id);
-    Object.assign(product, input);
+    const defined = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
+    Object.assign(product, defined);
     const result = this.toResult(await this.productsRepo.save(product));
     await Promise.all([this.cache.del(keyOne(id)), this.cache.del(keyAll())]);
     return result;
   }
 
   async remove(id: string): Promise<void> {
-    const product = await this.productsRepo.findOne({ where: { id } });
+    const product = await this.productsRepo.findOne({ where: { id, isActive: true } });
     if (!product) throw new ProductNotFoundError(id);
     product.isActive = false;
     await this.productsRepo.save(product);

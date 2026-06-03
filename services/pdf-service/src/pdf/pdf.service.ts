@@ -2,7 +2,7 @@ import { Injectable, Logger } from '@nestjs/common';
 import { KafkaProducerService } from '@nest-gateway/kafka';
 import * as fs from 'fs';
 import * as path from 'path';
-import PDFDocument from 'pdfkit';
+import * as PDFDocument from 'pdfkit';
 import { OrderConfirmedEvent, PdfGeneratedEvent, KAFKA_TOPICS } from '@nest-gateway/shared';
 
 @Injectable()

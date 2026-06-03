@@ -64,6 +64,8 @@ export class HttpExceptionFilter implements ExceptionFilter {
       403: 'FORBIDDEN',
       404: 'NOT_FOUND',
       408: 'REQUEST_TIMEOUT',
+      409: 'CONFLICT',
+      422: 'UNPROCESSABLE_ENTITY',
       429: 'TOO_MANY_REQUESTS',
       500: 'INTERNAL_ERROR',
       502: 'BAD_GATEWAY',
