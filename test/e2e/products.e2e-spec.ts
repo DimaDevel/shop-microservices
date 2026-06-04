@@ -39,6 +39,13 @@ describe('Products API (e2e)', () => {
   });
 
   describe('POST /products', () => {
+    it('returns 401 without token', async () => {
+      const { status, body } = await api.post<ApiError>('/products', newProduct);
+
+      expect(status).toBe(401);
+      expect(body.code).toBe('UNAUTHORIZED');
+    });
+
     it('returns 403 for non-admin user', async () => {
       const { status, body } = await api.post<ApiError>('/products', newProduct, userToken);
 
@@ -78,6 +85,13 @@ describe('Products API (e2e)', () => {
   });
 
   describe('GET /products/:id', () => {
+    it('returns 401 without token', async () => {
+      const { status, body } = await api.get<ApiError>(`/products/${createdProductId}`);
+
+      expect(status).toBe(401);
+      expect(body.code).toBe('UNAUTHORIZED');
+    });
+
     it('returns the product by id', async () => {
       const { status, body } = await api.get<{ id: string; name: string }>(
         `/products/${createdProductId}`,
@@ -101,6 +115,13 @@ describe('Products API (e2e)', () => {
   });
 
   describe('PATCH /products/:id', () => {
+    it('returns 401 without token', async () => {
+      const { status, body } = await api.patch<ApiError>(`/products/${createdProductId}`, { price: 1 });
+
+      expect(status).toBe(401);
+      expect(body.code).toBe('UNAUTHORIZED');
+    });
+
     it('updates price and preserves other fields', async () => {
       const { status, body } = await api.patch<{
         id: string;
@@ -141,6 +162,13 @@ describe('Products API (e2e)', () => {
   });
 
   describe('DELETE /products/:id', () => {
+    it('returns 401 without token', async () => {
+      const { status, body } = await api.delete<ApiError>(`/products/${createdProductId}`);
+
+      expect(status).toBe(401);
+      expect(body.code).toBe('UNAUTHORIZED');
+    });
+
     it('deletes the product and returns 204', async () => {
       const { status } = await api.delete(`/products/${createdProductId}`, adminToken);
 

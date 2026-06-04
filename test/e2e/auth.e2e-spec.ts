@@ -41,6 +41,25 @@ describe('Auth API (e2e)', () => {
       expect(status).toBe(400);
       expect(body.code).toBe('BAD_REQUEST');
     });
+
+    it('returns 400 for invalid email format', async () => {
+      const { status, body } = await api.post<ApiError>('/auth/register', {
+        email: 'not-an-email',
+        password: 'securePass123',
+      });
+
+      expect(status).toBe(400);
+      expect(body.code).toBe('BAD_REQUEST');
+    });
+
+    it('returns 400 when email is missing', async () => {
+      const { status, body } = await api.post<ApiError>('/auth/register', {
+        password: 'securePass123',
+      });
+
+      expect(status).toBe(400);
+      expect(body.code).toBe('BAD_REQUEST');
+    });
   });
 
   describe('POST /auth/login', () => {
@@ -71,6 +90,13 @@ describe('Auth API (e2e)', () => {
 
       expect(status).toBe(401);
       expect(body.code).toBe('UNAUTHORIZED');
+    });
+
+    it('returns 400 when required fields are missing', async () => {
+      const { status, body } = await api.post<ApiError>('/auth/login', {});
+
+      expect(status).toBe(400);
+      expect(body.code).toBe('BAD_REQUEST');
     });
   });
 

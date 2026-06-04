@@ -142,5 +142,34 @@ describe('Orders API (e2e)', () => {
       expect(status).toBe(404);
       expect(body.code).toBe('NOT_FOUND');
     });
+
+    it('returns 401 without token', async () => {
+      const created = await api.post<{ id: string }>(
+        '/orders',
+        { items: [{ productId: affordableProductId, quantity: 1 }] },
+        userToken,
+      );
+
+      const { status } = await api.get(`/orders/${created.body.id}`);
+
+      expect(status).toBe(401);
+    });
+
+    it('returns 404 when accessing another user\'s order', async () => {
+      const otherTokens = await registerUser(uniqueEmail('orders-other'));
+      const created = await api.post<{ id: string }>(
+        '/orders',
+        { items: [{ productId: affordableProductId, quantity: 1 }] },
+        userToken,
+      );
+
+      const { status, body } = await api.get<ApiError>(
+        `/orders/${created.body.id}`,
+        otherTokens.accessToken,
+      );
+
+      expect(status).toBe(404);
+      expect(body.code).toBe('NOT_FOUND');
+    });
   });
 });

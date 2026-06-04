@@ -1,4 +1,4 @@
-import { api, uniqueEmail, registerUser, pollUntil, ApiError } from './helpers';
+import { api, uniqueEmail, registerUser, promoteToAdmin, pollUntil, ApiError } from './helpers';
 
 describe('Users API (e2e)', () => {
   let token: string;
@@ -121,6 +121,56 @@ describe('Users API (e2e)', () => {
       const { status } = await api.patch(`/users/${userId}`, { name: 'No token' });
 
       expect(status).toBe(401);
+    });
+  });
+
+  describe('DELETE /users/:id', () => {
+    let adminToken: string;
+    let deleteTargetId: string;
+
+    beforeAll(async () => {
+      const adminEmail = uniqueEmail('users-admin');
+      await registerUser(adminEmail);
+      const adminTokens = await promoteToAdmin(adminEmail);
+      adminToken = adminTokens.accessToken;
+
+      const target = await registerUser(uniqueEmail('users-delete-target'));
+      deleteTargetId = target.userId;
+
+      await pollUntil(
+        () => api.get(`/users/${deleteTargetId}`, adminToken),
+        (r) => r.status === 200,
+        { maxAttempts: 15, intervalMs: 1000 },
+      );
+    });
+
+    it('returns 401 without token', async () => {
+      const { status } = await api.delete(`/users/${deleteTargetId}`);
+
+      expect(status).toBe(401);
+    });
+
+    it('returns 403 for non-admin user', async () => {
+      const { status, body } = await api.delete<ApiError>(`/users/${deleteTargetId}`, token);
+
+      expect(status).toBe(403);
+      expect(body.code).toBe('FORBIDDEN');
+    });
+
+    it('returns 404 for a non-existent user', async () => {
+      const { status, body } = await api.delete<ApiError>(
+        '/users/00000000-0000-0000-0000-000000000000',
+        adminToken,
+      );
+
+      expect(status).toBe(404);
+      expect(body.code).toBe('NOT_FOUND');
+    });
+
+    it('admin soft-deletes the user and returns 200', async () => {
+      const { status } = await api.delete(`/users/${deleteTargetId}`, adminToken);
+
+      expect(status).toBe(200);
     });
   });
 });
