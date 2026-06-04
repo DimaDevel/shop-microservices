@@ -1,6 +1,6 @@
 import { execSync } from 'child_process';
 
-const BASE = process.env.API_URL ?? 'http://localhost';
+const BASE = process.env.API_URL ?? 'http://localhost:3000';
 
 interface HttpResponse<T = unknown> {
   status: number;
