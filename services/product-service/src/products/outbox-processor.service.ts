@@ -2,13 +2,14 @@ import { Injectable, Logger } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Interval } from '@nestjs/schedule';
+import { ConfigService } from '@nestjs/config';
 import { KafkaProducerService } from '@nest-gateway/kafka';
 import { OutboxEntity, OutboxStatus } from './outbox.entity';
 
 @Injectable()
 export class OutboxProcessorService {
   private readonly logger = new Logger(OutboxProcessorService.name);
-  private readonly MAX_RETRIES = 5;
+  private readonly maxRetries: number;
   // Guards against overlapping ticks within the same process instance.
   // Cross-instance races are prevented by SELECT FOR UPDATE SKIP LOCKED below.
   private isProcessing = false;
@@ -17,7 +18,10 @@ export class OutboxProcessorService {
     @InjectRepository(OutboxEntity)
     private readonly outboxRepo: Repository<OutboxEntity>,
     private readonly kafkaProducer: KafkaProducerService,
-  ) {}
+    private readonly config: ConfigService,
+  ) {
+    this.maxRetries = this.config.get<number>('OUTBOX_MAX_RETRIES', 5);
+  }
 
   @Interval(1000)
   async processPending(): Promise<void> {
@@ -57,7 +61,7 @@ export class OutboxProcessorService {
             // not flood the poll loop.
             const delayMs = Math.min(1000 * Math.pow(2, retryCount), 300_000);
             await manager.getRepository(OutboxEntity).update(record.id, {
-              status: retryCount >= this.MAX_RETRIES ? OutboxStatus.FAILED : OutboxStatus.PENDING,
+              status: retryCount >= this.maxRetries ? OutboxStatus.FAILED : OutboxStatus.PENDING,
               retryCount,
               lastError: (e as Error).message,
               scheduledAt: new Date(Date.now() + delayMs),

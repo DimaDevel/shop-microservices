@@ -104,11 +104,11 @@ describe('OutboxProcessorService', () => {
     expect(dataSource.transaction).not.toHaveBeenCalled();
   });
 
-  it('logs and rethrows when transaction itself fails, then resets isProcessing', async () => {
+  it('logs the error and resets isProcessing when transaction itself fails', async () => {
     dataSource.transaction.mockRejectedValue(new Error('db error'));
     const loggerSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => {});
 
-    await expect(service.processPending()).rejects.toThrow('db error');
+    await expect(service.processPending()).resolves.toBeUndefined();
 
     expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('db error'));
     expect((service as any).isProcessing).toBe(false);

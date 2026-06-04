@@ -35,27 +35,51 @@ export class ProductsService {
     return promise;
   }
 
+  private async cacheGet<T>(key: string): Promise<T | null> {
+    try {
+      return (await this.cache.get<T>(key)) ?? null;
+    } catch {
+      return null;
+    }
+  }
+
+  private async cacheSet(key: string, value: unknown, ttl: number): Promise<void> {
+    try {
+      await this.cache.set(key, value, ttl);
+    } catch {
+      // Redis unavailable — serve from DB, no cache write
+    }
+  }
+
+  private async cacheDel(...keys: string[]): Promise<void> {
+    try {
+      await Promise.all(keys.map((k) => this.cache.del(k)));
+    } catch {
+      // Redis unavailable — cache eviction skipped, will expire naturally
+    }
+  }
+
   async findAll(): Promise<ProductResult[]> {
-    const cached = await this.cache.get<ProductResult[]>(keyAll());
+    const cached = await this.cacheGet<ProductResult[]>(keyAll());
     if (cached) return cached;
 
     return this.dedup(keyAll(), async () => {
       const products = await this.productsRepo.find({ where: { isActive: true } });
       const result = products.map(this.toResult);
-      await this.cache.set(keyAll(), result, CACHE_TTL_ALL);
+      await this.cacheSet(keyAll(), result, CACHE_TTL_ALL);
       return result;
     });
   }
 
   async findById(id: string): Promise<ProductResult> {
-    const cached = await this.cache.get<ProductResult>(keyOne(id));
+    const cached = await this.cacheGet<ProductResult>(keyOne(id));
     if (cached) return cached;
 
     return this.dedup(keyOne(id), async () => {
       const product = await this.productsRepo.findOne({ where: { id, isActive: true } });
       if (!product) throw new ProductNotFoundError(id);
       const result = this.toResult(product);
-      await this.cache.set(keyOne(id), result, CACHE_TTL_ONE);
+      await this.cacheSet(keyOne(id), result, CACHE_TTL_ONE);
       return result;
     });
   }
@@ -63,7 +87,7 @@ export class ProductsService {
   async create(input: CreateProductInput): Promise<ProductResult> {
     const product = this.productsRepo.create(input);
     const result = this.toResult(await this.productsRepo.save(product));
-    await this.cache.del(keyAll());
+    await this.cacheDel(keyAll());
     return result;
   }
 
@@ -73,7 +97,7 @@ export class ProductsService {
     const defined = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
     Object.assign(product, defined);
     const result = this.toResult(await this.productsRepo.save(product));
-    await Promise.all([this.cache.del(keyOne(id)), this.cache.del(keyAll())]);
+    await this.cacheDel(keyOne(id), keyAll());
     return result;
   }
 
@@ -82,7 +106,7 @@ export class ProductsService {
     if (!product) throw new ProductNotFoundError(id);
     product.isActive = false;
     await this.productsRepo.save(product);
-    await Promise.all([this.cache.del(keyOne(id)), this.cache.del(keyAll())]);
+    await this.cacheDel(keyOne(id), keyAll());
   }
 
   // Accepts an external manager so it can participate in the caller's transaction.
@@ -121,8 +145,7 @@ export class ProductsService {
     // window between transaction commit and eviction where a reader can
     // re-populate the cache with pre-reservation stock counts.
     // For the own-transaction path: evict after commit (cache miss is harmless).
-    const evict = () =>
-      Promise.all([...input.items.map((item) => this.cache.del(keyOne(item.productId))), this.cache.del(keyAll())]);
+    const evict = () => this.cacheDel(...input.items.map((item) => keyOne(item.productId)), keyAll());
 
     if (manager) {
       await evict();
@@ -138,7 +161,7 @@ export class ProductsService {
   async releaseStock(items: Array<{ productId: string; quantity: number }>, manager: EntityManager): Promise<void> {
     // Evict before incrementing: prevents a concurrent reader from re-populating
     // the cache with the pre-compensation value during the uncommitted transaction window.
-    await Promise.all([...items.map((item) => this.cache.del(keyOne(item.productId))), this.cache.del(keyAll())]);
+    await this.cacheDel(...items.map((item) => keyOne(item.productId)), keyAll());
 
     const repo = manager.getRepository(ProductEntity);
     for (const item of items) {

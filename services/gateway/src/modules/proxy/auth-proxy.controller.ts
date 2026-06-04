@@ -1,7 +1,10 @@
-import { Controller, Post, Body, Req, Res, HttpCode } from '@nestjs/common';
+import { Controller, Post, Body, Req, Res, HttpCode, Inject } from '@nestjs/common';
 import { ApiTags, ApiOperation, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { Public, CurrentUser, RequestUser } from '@nest-gateway/shared';
+import { CACHE_MANAGER } from '@nestjs/cache-manager';
+import { Cache } from 'cache-manager';
+import { JwtService } from '@nestjs/jwt';
+import { Public, CurrentUser, RequestUser, JwtPayload } from '@nest-gateway/shared';
 import { ProxyService } from './proxy.service';
 import { LoginRequestDto, RegisterRequestDto, RefreshTokenRequestDto, AuthResponseDto, AuthTokensDto } from '../../swagger/auth.dto';
 import { ApiErrorDto, MessageDto } from '../../swagger/common.dto';
@@ -9,7 +12,11 @@ import { ApiErrorDto, MessageDto } from '../../swagger/common.dto';
 @ApiTags('Auth')
 @Controller('auth')
 export class AuthProxyController {
-  constructor(private readonly proxyService: ProxyService) {}
+  constructor(
+    private readonly proxyService: ProxyService,
+    private readonly jwtService: JwtService,
+    @Inject(CACHE_MANAGER) private readonly cache: Cache,
+  ) {}
 
   @Public()
   @Post('login')
@@ -84,7 +91,7 @@ export class AuthProxyController {
   @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorDto })
   async logout(
     @CurrentUser() user: RequestUser,
-    @Req() req: FastifyRequest & { correlationId?: string },
+    @Req() req: FastifyRequest & { correlationId?: string; headers: { authorization?: string } },
     @Res() res: FastifyReply,
   ) {
     const { status, data } = await this.proxyService.proxyToAuth({
@@ -93,6 +100,14 @@ export class AuthProxyController {
       user,
       correlationId: req.correlationId,
     });
+
+    const token = req.headers.authorization?.replace('Bearer ', '');
+    if (token) {
+      const payload = this.jwtService.decode<JwtPayload>(token);
+      if (payload?.iat) {
+        await this.cache.del(`jwt:${payload.sub}:${payload.iat}`).catch(() => undefined);
+      }
+    }
 
     return res.status(status).send(data);
   }

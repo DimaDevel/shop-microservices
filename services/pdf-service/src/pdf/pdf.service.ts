@@ -1,6 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { KafkaProducerService } from '@nest-gateway/kafka';
 import * as fs from 'fs';
+import { promises as fsp } from 'fs';
 import * as path from 'path';
 import * as PDFDocument from 'pdfkit';
 import { OrderConfirmedEvent, PdfGeneratedEvent, KAFKA_TOPICS } from '@nest-gateway/shared';
@@ -17,7 +18,8 @@ export class PdfService {
   async generateOrderPdf(event: OrderConfirmedEvent): Promise<void> {
     const pdfPath = path.join(this.pdfDir, `order-${event.orderId}.pdf`);
 
-    if (fs.existsSync(pdfPath)) {
+    const exists = await fsp.access(pdfPath).then(() => true).catch(() => false);
+    if (exists) {
       this.logger.warn(`[${event.correlationId}] PDF already exists for order ${event.orderId}, re-emitting event`);
     } else {
       this.logger.log(`[${event.correlationId}] Generating PDF for order ${event.orderId}`);

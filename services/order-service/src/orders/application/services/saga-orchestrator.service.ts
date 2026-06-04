@@ -32,17 +32,6 @@ export class SagaOrchestrator {
     private readonly dataSource: DataSource,
   ) {}
 
-  async startSaga(
-    orderId: string,
-    items: Array<{ productId: string; quantity: number }>,
-    correlationId: string,
-    manager: EntityManager,
-  ): Promise<void> {
-    const saga = await this.sagaRepo.save(Saga.create(orderId, correlationId), manager);
-    const command: ReserveStockCommand = { commandId: saga.id, orderId, correlationId, items };
-    await this.outboxRepo.write(orderId, KAFKA_TOPICS.RESERVE_STOCK, orderId, command, manager);
-  }
-
   async onStockReserved(event: StockReservedEvent): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
       const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);

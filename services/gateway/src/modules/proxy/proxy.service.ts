@@ -14,17 +14,6 @@ interface ProxyRequestOptions {
 
 type ServiceName = 'authService' | 'userService' | 'productService' | 'orderService';
 
-// ─────────────────────────────────────────────────────────────
-//  ProxyService
-//
-//  Central service for proxying requests to microservices.
-//  Each downstream service is wrapped in a Circuit Breaker (opossum).
-//
-//  Responsible for:
-//  - Enriching request headers (x-user-id, x-roles, x-correlation-id)
-//  - Circuit breaker logic
-//  - Uniform error handling from downstream services
-// ─────────────────────────────────────────────────────────────
 @Injectable()
 export class ProxyService implements OnModuleInit {
   private readonly logger = new Logger(ProxyService.name);
@@ -46,7 +35,7 @@ export class ProxyService implements OnModuleInit {
     for (const [name, _url] of Object.entries(this.serviceUrls)) {
       const breaker = new CircuitBreaker(async (fn: () => Promise<Response>) => fn(), {
         name,
-        timeout: 5000,
+        timeout: 4500,
         errorThresholdPercentage: 50,
         resetTimeout: 30000,
         volumeThreshold: 5,

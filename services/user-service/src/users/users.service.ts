@@ -44,8 +44,7 @@ export class UsersService {
     }
 
     const defined = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
-    Object.assign(profile, defined);
-    return this.toResult(await this.profilesRepo.save(profile));
+    return this.toResult(await this.profilesRepo.save({ ...profile, ...defined }));
   }
 
   async remove(id: string, requesterRoles: Role[]): Promise<void> {

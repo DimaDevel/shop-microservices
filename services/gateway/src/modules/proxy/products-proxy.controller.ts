@@ -1,8 +1,7 @@
 import { Controller, Get, Post, Patch, Delete, Body, Param, Req, Res, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
-import { CurrentUser, RequestUser, Roles } from '@nest-gateway/shared';
-import { Role } from '@nest-gateway/shared';
+import { CurrentUser, RequestUser, Roles, Role } from '@nest-gateway/shared';
 import { ProxyService } from './proxy.service';
 import { ProductDto, CreateProductRequestDto, UpdateProductRequestDto } from '../../swagger/product.dto';
 import { ApiErrorDto } from '../../swagger/common.dto';

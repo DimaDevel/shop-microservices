@@ -1,6 +1,6 @@
 import { Injectable, Logger, OnModuleDestroy, OnModuleInit } from '@nestjs/common';
 import { Kafka, Producer } from 'kafkajs';
-import { context, propagation, trace } from '@opentelemetry/api';
+import { context, propagation, SpanStatusCode, trace } from '@opentelemetry/api';
 import { randomUUID } from 'crypto';
 import { KafkaEnvelope } from './kafka.envelope';
 import { KafkaModuleOptions } from './kafka.options';
@@ -61,6 +61,9 @@ export class KafkaProducerService implements OnModuleInit, OnModuleDestroy {
           },
         ],
       });
+    } catch (err) {
+      span.setStatus({ code: SpanStatusCode.ERROR, message: (err as Error).message });
+      throw err;
     } finally {
       span.end();
     }

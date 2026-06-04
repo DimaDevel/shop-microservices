@@ -7,8 +7,9 @@ import { HEADERS } from '@nest-gateway/shared';
 
 const EXPECTED_SECRET = 'my-internal-secret';
 
-function makeContext(headers: Record<string, string>, _isPublic = false): ExecutionContext {
+function makeContext(headers: Record<string, string>): ExecutionContext {
   return {
+    getType: jest.fn().mockReturnValue('http'),
     getHandler: jest.fn(),
     getClass: jest.fn(),
     switchToHttp: () => ({ getRequest: () => ({ headers }) }),

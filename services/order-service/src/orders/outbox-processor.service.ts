@@ -56,7 +56,6 @@ export class OutboxProcessorService {
       });
     } catch (err) {
       this.logger.error(`Outbox processing failed: ${(err as Error).message}`);
-      throw err;
     } finally {
       this.isProcessing = false;
     }

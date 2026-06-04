@@ -82,7 +82,7 @@ export class KafkaConsumerService implements OnModuleInit, OnApplicationBootstra
         if (attempt === maxRetries) {
           span.setStatus({ code: SpanStatusCode.ERROR, message: msg });
           span.end();
-          await this.sendToDlq(topic, envelope, err as Error);
+          await this.sendToDlq(topic, envelope, err as Error, maxRetries);
           return;
         }
         await new Promise((r) => setTimeout(r, 300 * Math.pow(2, attempt - 1)));
@@ -90,14 +90,14 @@ export class KafkaConsumerService implements OnModuleInit, OnApplicationBootstra
     }
   }
 
-  private async sendToDlq(topic: string, envelope: KafkaEnvelope, err: Error): Promise<void> {
+  private async sendToDlq(topic: string, envelope: KafkaEnvelope, err: Error, totalAttempts: number): Promise<void> {
     const dlqTopic = `${topic}.dlq`;
     const dlqPayload: KafkaDlqEnvelope = {
       originalEnvelope: envelope,
       failedTopic: topic,
       failedAt: new Date().toISOString(),
       error: err.message,
-      totalAttempts: (envelope.retryCount ?? 0) + 1,
+      totalAttempts,
     };
     try {
       await this.producer.publish(dlqTopic, dlqPayload, {
