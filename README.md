@@ -31,7 +31,7 @@ A production-grade microservices architecture built with NestJS + TypeScript, de
 | **notification-service** | 3006 | `notifications_db` | Email/notification dispatch |
 | **payment-service** | 3007 | `payments_db` | Payment processing |
 
-Infrastructure: Nginx `:80`, Redis `:6379`, Jaeger UI `:16686`, Kafka `:9092`, Zookeeper `:2181`.
+Infrastructure: Nginx `:80`, Redis `:6379`, Jaeger UI `:16686`, Kafka `:9092`.
 
 ## Architecture
 
