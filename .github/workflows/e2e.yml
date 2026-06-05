@@ -1,0 +1,73 @@
+name: Integration & E2E
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  integration:
+    name: Integration tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Run integration tests
+        run: npm run test:integration
+        env:
+          # Auth-service integration tests read these via ConfigModule
+          JWT_SECRET: ci-test-jwt-secret-minimum-32-chars!!
+          JWT_REFRESH_SECRET: ci-test-refresh-secret-minimum-32!!
+
+  e2e:
+    name: E2E tests
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - run: npm ci
+
+      - name: Start stack
+        run: docker compose up -d --build
+        env:
+          JWT_SECRET: ci-test-jwt-secret-minimum-32-chars!!
+          JWT_REFRESH_SECRET: ci-test-refresh-secret-minimum-32!!
+          JWT_ACCESS_EXPIRES_IN: 3600
+          JWT_REFRESH_EXPIRES_IN: 604800
+          INTERNAL_SECRET: ci-test-internal-secret-32-chars!!
+          DB_PASSWORD: postgres
+
+      - name: Wait for gateway to be healthy
+        run: |
+          echo "Waiting for gateway..."
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:3000/health; then
+              echo "Gateway is up"
+              exit 0
+            fi
+            echo "Attempt $i/30 — retrying in 10s"
+            sleep 10
+          done
+          echo "Gateway did not become healthy in time"
+          docker compose logs
+          exit 1
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          API_URL: http://localhost:3000
+
+      - name: Tear down
+        if: always()
+        run: docker compose down -v
