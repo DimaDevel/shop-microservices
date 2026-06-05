@@ -1,3 +1,8 @@
+export interface FindAllUsersInput {
+  page: number;
+  limit: number;
+}
+
 export interface UpdateProfileInput {
   name?: string;
   avatarUrl?: string;

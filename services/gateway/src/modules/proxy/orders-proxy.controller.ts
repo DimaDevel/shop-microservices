@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param, Req, Res } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CurrentUser, RequestUser } from '@nest-gateway/shared';
@@ -36,16 +36,22 @@ export class OrdersProxyController {
 
   @Get()
   @ApiOperation({ summary: 'List orders for the authenticated user' })
-  @ApiResponse({ status: 200, description: 'Array of orders', type: [OrderDto] })
+  @ApiResponse({ status: 200, description: 'Paginated orders', type: [OrderDto] })
   @ApiResponse({ status: 401, description: 'Unauthorized', type: ApiErrorDto })
   async findAll(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
     @Req() req: FastifyRequest & { correlationId?: string },
     @Res() res: FastifyReply,
     @CurrentUser() user: RequestUser,
   ) {
+    const qs = new URLSearchParams();
+    if (page) qs.set('page', page);
+    if (limit) qs.set('limit', limit);
+    const query = qs.toString();
     const { status, data } = await this.proxyService.proxyToOrders({
       method: 'GET',
-      path: '/orders',
+      path: query ? `/orders?${query}` : '/orders',
       user,
       correlationId: req.correlationId,
     });

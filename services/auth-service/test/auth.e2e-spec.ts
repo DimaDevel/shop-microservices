@@ -84,7 +84,7 @@ describe('Auth (e2e)', () => {
     await app.getHttpAdapter().getInstance().ready();
   });
 
-  afterAll(() => app.close());
+  afterAll(async () => { await app?.close(); });
 
   beforeEach(() => {
     jest.clearAllMocks();

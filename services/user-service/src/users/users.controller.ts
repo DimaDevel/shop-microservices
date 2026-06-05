@@ -1,6 +1,6 @@
-import { Controller, Get, Patch, Delete, Param, Body, Headers } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query, Body, Headers } from '@nestjs/common';
 import { UsersService } from './users.service';
-import { UpdateUserDto } from './users.dto';
+import { UpdateUserDto, PaginationQueryDto } from './users.dto';
 import { UpdateProfileInput } from './users.inputs';
 import { HEADERS, Role, Public } from '@nest-gateway/shared';
 
@@ -12,6 +12,11 @@ export class UsersController {
   @Get('health')
   health() {
     return { status: 'ok', service: 'user-service' };
+  }
+
+  @Get()
+  findAll(@Query() query: PaginationQueryDto, @Headers(HEADERS.USER_ROLES) rolesHeader: string) {
+    return this.usersService.findAll({ page: query.page, limit: query.limit }, this.parseRoles(rolesHeader));
   }
 
   @Get(':id')

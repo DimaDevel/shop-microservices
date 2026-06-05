@@ -1,4 +1,20 @@
-import { IsString, IsOptional, IsUrl, MaxLength, Matches, IsDateString, IsISO31661Alpha2 } from 'class-validator';
+import { IsString, IsOptional, IsUrl, IsInt, Min, Max, MaxLength, Matches, IsDateString, IsISO31661Alpha2 } from 'class-validator';
+import { Type } from 'class-transformer';
+
+export class PaginationQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 20;
+}
 
 export class UpdateUserDto {
   @IsOptional()

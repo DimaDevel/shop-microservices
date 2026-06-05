@@ -73,13 +73,12 @@ describe('AuthService (integration)', () => {
   }, 120_000);
 
   afterAll(async () => {
-    await module.close();
-    await container.stop();
+    await module?.close();
+    await container?.stop();
   });
 
   afterEach(async () => {
-    // Truncate tables between tests for isolation
-    await dataSource.query('TRUNCATE users, auth_outbox RESTART IDENTITY CASCADE');
+    await dataSource?.query('TRUNCATE users, auth_outbox RESTART IDENTITY CASCADE');
   });
 
   describe('register', () => {

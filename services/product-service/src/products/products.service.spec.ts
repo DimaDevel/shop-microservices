@@ -29,6 +29,7 @@ describe('ProductsService', () => {
     mockRepo = {
       find: jest.fn(),
       findOne: jest.fn(),
+      findAndCount: jest.fn(),
       create: jest.fn(),
       save: jest.fn(),
     };
@@ -54,43 +55,26 @@ describe('ProductsService', () => {
   afterEach(() => jest.clearAllMocks());
 
   describe('findAll', () => {
-    it('returns cached value without hitting the repository', async () => {
-      const cached = [{ id: 'prod-1', name: 'Widget' }];
-      mockCache.get.mockResolvedValue(cached);
+    it('returns paginated results from the repository', async () => {
+      mockRepo.findAndCount.mockResolvedValue([[makeProduct()], 1]);
 
-      const result = await service.findAll();
+      const result = await service.findAll({ page: 1, limit: 20 });
 
-      expect(result).toBe(cached);
-      expect(mockRepo.find).not.toHaveBeenCalled();
+      expect(mockRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 20 }),
+      );
+      expect(result.data).toHaveLength(1);
+      expect(result.meta).toEqual({ page: 1, limit: 20, total: 1, totalPages: 1 });
     });
 
-    it('queries the repository and caches result on cache miss', async () => {
-      mockCache.get.mockResolvedValue(null);
-      mockCache.set.mockResolvedValue(undefined);
-      mockRepo.find.mockResolvedValue([makeProduct()]);
+    it('calculates correct skip for page 2', async () => {
+      mockRepo.findAndCount.mockResolvedValue([[], 0]);
 
-      const result = await service.findAll();
+      await service.findAll({ page: 2, limit: 10 });
 
-      expect(mockRepo.find).toHaveBeenCalledTimes(1);
-      expect(mockCache.set).toHaveBeenCalledWith('products:all', result, expect.any(Number));
-      expect(result[0]).toMatchObject({ id: 'prod-1', name: 'Widget' });
-    });
-
-    it('deduplicates concurrent cache-miss DB fetches', async () => {
-      mockCache.get.mockResolvedValue(null);
-      mockCache.set.mockResolvedValue(undefined);
-
-      let resolveFind!: (v: ProductEntity[]) => void;
-      const findPromise = new Promise<ProductEntity[]>((r) => {
-        resolveFind = r;
-      });
-      mockRepo.find.mockReturnValueOnce(findPromise);
-
-      const [p1, p2] = [service.findAll(), service.findAll()];
-      resolveFind([makeProduct()]);
-      await Promise.all([p1, p2]);
-
-      expect(mockRepo.find).toHaveBeenCalledTimes(1);
+      expect(mockRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 10, take: 10 }),
+      );
     });
   });
 
@@ -200,7 +184,6 @@ describe('ProductsService', () => {
       const deletedKeys = mockCache.del.mock.calls.map((c: unknown[]) => c[0]);
       expect(deletedKeys).toContain('product:p1');
       expect(deletedKeys).toContain('product:p2');
-      expect(deletedKeys).toContain('products:all');
     });
   });
 });

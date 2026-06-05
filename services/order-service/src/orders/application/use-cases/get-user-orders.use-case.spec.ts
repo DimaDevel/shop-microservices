@@ -30,28 +30,30 @@ describe('GetUserOrdersUseCase', () => {
     useCase = module.get(GetUserOrdersUseCase);
   });
 
-  it('returns all orders for the user', async () => {
-    orderRepo.findByUser.mockResolvedValue([makeOrder('order-1'), makeOrder('order-2')]);
+  it('returns paginated orders for the user', async () => {
+    orderRepo.findByUser.mockResolvedValue({ items: [makeOrder('order-1'), makeOrder('order-2')], total: 2 });
 
-    const results = await useCase.execute('user-1');
+    const result = await useCase.execute('user-1', 1, 20);
 
-    expect(results).toHaveLength(2);
-    expect(results[0].id).toBe('order-1');
-    expect(results[1].id).toBe('order-2');
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0].id).toBe('order-1');
+    expect(result.meta).toEqual({ page: 1, limit: 20, total: 2, totalPages: 1 });
   });
 
-  it('returns an empty array when the user has no orders', async () => {
-    orderRepo.findByUser.mockResolvedValue([]);
+  it('returns empty data when the user has no orders', async () => {
+    orderRepo.findByUser.mockResolvedValue({ items: [], total: 0 });
 
-    const results = await useCase.execute('user-1');
+    const result = await useCase.execute('user-1', 1, 20);
 
-    expect(results).toEqual([]);
+    expect(result.data).toEqual([]);
+    expect(result.meta.total).toBe(0);
   });
 
   it('maps each order to an OrderResult with correct fields', async () => {
-    orderRepo.findByUser.mockResolvedValue([makeOrder('order-1')]);
+    orderRepo.findByUser.mockResolvedValue({ items: [makeOrder('order-1')], total: 1 });
 
-    const [result] = await useCase.execute('user-1');
+    const { data } = await useCase.execute('user-1', 1, 20);
+    const [result] = data;
 
     expect(result.userId).toBe('user-1');
     expect(result.status).toBe(OrderStatus.PENDING);

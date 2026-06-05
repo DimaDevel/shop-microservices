@@ -69,17 +69,18 @@ describe('OrdersController', () => {
   });
 
   describe('GET /orders', () => {
-    it('returns all orders for the user', async () => {
-      getUserUseCase.execute.mockResolvedValue([makeResult('order-1'), makeResult('order-2')]);
+    it('returns paginated orders for the user', async () => {
+      const paginated = { data: [makeResult('order-1'), makeResult('order-2')], meta: { page: 1, limit: 20, total: 2, totalPages: 1 } };
+      getUserUseCase.execute.mockResolvedValue(paginated);
 
-      const result = await controller.findAll('user-1');
+      const result = await controller.findAll({ page: 1, limit: 20 } as any, 'user-1');
 
-      expect(getUserUseCase.execute).toHaveBeenCalledWith('user-1');
-      expect(result).toHaveLength(2);
+      expect(getUserUseCase.execute).toHaveBeenCalledWith('user-1', 1, 20);
+      expect(result).toBe(paginated);
     });
 
     it('throws UnauthorizedException when userId header is missing', () => {
-      expect(() => controller.findAll('')).toThrow(UnauthorizedException);
+      expect(() => controller.findAll({ page: 1, limit: 20 } as any, '')).toThrow(UnauthorizedException);
     });
   });
 

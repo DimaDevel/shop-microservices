@@ -4,14 +4,13 @@ import { DataSource, EntityManager, Repository } from 'typeorm';
 import { CACHE_MANAGER } from '@nestjs/cache-manager';
 import { Cache } from 'cache-manager';
 import { ProductEntity } from './product.entity';
-import { CreateProductInput, UpdateProductInput, ReserveStockInput } from './products.inputs';
+import { PaginateProductsInput, CreateProductInput, UpdateProductInput, ReserveStockInput } from './products.inputs';
 import { ProductResult, ReserveStockResult } from './products.outputs';
+import { PaginatedResult } from '@nest-gateway/shared';
 import { ProductNotFoundError, InsufficientStockError } from './products.errors';
 
-const CACHE_TTL_ALL = 15 * 60 * 1000; // 15 min
 const CACHE_TTL_ONE = 10 * 60 * 1000; // 10 min
 
-const keyAll = () => 'products:all';
 const keyOne = (id: string) => `product:${id}`;
 
 @Injectable()
@@ -59,16 +58,18 @@ export class ProductsService {
     }
   }
 
-  async findAll(): Promise<ProductResult[]> {
-    const cached = await this.cacheGet<ProductResult[]>(keyAll());
-    if (cached) return cached;
-
-    return this.dedup(keyAll(), async () => {
-      const products = await this.productsRepo.find({ where: { isActive: true } });
-      const result = products.map(this.toResult);
-      await this.cacheSet(keyAll(), result, CACHE_TTL_ALL);
-      return result;
+  async findAll(input: PaginateProductsInput): Promise<PaginatedResult<ProductResult>> {
+    const { page, limit } = input;
+    const [products, total] = await this.productsRepo.findAndCount({
+      where: { isActive: true },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
     });
+    return {
+      data: products.map(this.toResult),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   async findById(id: string): Promise<ProductResult> {
@@ -86,9 +87,7 @@ export class ProductsService {
 
   async create(input: CreateProductInput): Promise<ProductResult> {
     const product = this.productsRepo.create(input);
-    const result = this.toResult(await this.productsRepo.save(product));
-    await this.cacheDel(keyAll());
-    return result;
+    return this.toResult(await this.productsRepo.save(product));
   }
 
   async update(id: string, input: UpdateProductInput): Promise<ProductResult> {
@@ -97,7 +96,7 @@ export class ProductsService {
     const defined = Object.fromEntries(Object.entries(input).filter(([, v]) => v !== undefined));
     Object.assign(product, defined);
     const result = this.toResult(await this.productsRepo.save(product));
-    await this.cacheDel(keyOne(id), keyAll());
+    await this.cacheDel(keyOne(id));
     return result;
   }
 
@@ -106,7 +105,7 @@ export class ProductsService {
     if (!product) throw new ProductNotFoundError(id);
     product.isActive = false;
     await this.productsRepo.save(product);
-    await this.cacheDel(keyOne(id), keyAll());
+    await this.cacheDel(keyOne(id));
   }
 
   // Accepts an external manager so it can participate in the caller's transaction.
@@ -145,7 +144,7 @@ export class ProductsService {
     // window between transaction commit and eviction where a reader can
     // re-populate the cache with pre-reservation stock counts.
     // For the own-transaction path: evict after commit (cache miss is harmless).
-    const evict = () => this.cacheDel(...input.items.map((item) => keyOne(item.productId)), keyAll());
+    const evict = () => this.cacheDel(...input.items.map((item) => keyOne(item.productId)));
 
     if (manager) {
       await evict();
@@ -161,7 +160,7 @@ export class ProductsService {
   async releaseStock(items: Array<{ productId: string; quantity: number }>, manager: EntityManager): Promise<void> {
     // Evict before incrementing: prevents a concurrent reader from re-populating
     // the cache with the pre-compensation value during the uncommitted transaction window.
-    await this.cacheDel(...items.map((item) => keyOne(item.productId)), keyAll());
+    await this.cacheDel(...items.map((item) => keyOne(item.productId)));
 
     const repo = manager.getRepository(ProductEntity);
     for (const item of items) {

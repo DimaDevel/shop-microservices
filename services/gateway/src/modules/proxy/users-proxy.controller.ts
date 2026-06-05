@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Body, Req, Res, HttpCode } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query, Body, Req, Res, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CurrentUser, Roles, Role, RequestUser } from '@nest-gateway/shared';
@@ -11,6 +11,31 @@ import { ApiErrorDto } from '../../swagger/common.dto';
 @Controller('users')
 export class UsersProxyController {
   constructor(private readonly proxy: ProxyService) {}
+
+  @Get()
+  @Roles(Role.ADMIN)
+  @ApiOperation({ summary: 'List all users (Admin only)', description: 'Requires the `admin` role.' })
+  @ApiResponse({ status: 200, description: 'Paginated user profiles', type: [UserProfileDto] })
+  @ApiResponse({ status: 403, description: 'Forbidden — admin role required', type: ApiErrorDto })
+  async findAll(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
+    @CurrentUser() user: RequestUser,
+    @Req() req: FastifyRequest & { correlationId?: string },
+    @Res() res: FastifyReply,
+  ) {
+    const qs = new URLSearchParams();
+    if (page) qs.set('page', page);
+    if (limit) qs.set('limit', limit);
+    const query = qs.toString();
+    const { status, data } = await this.proxy.proxyToUsers({
+      method: 'GET',
+      path: query ? `/users?${query}` : '/users',
+      user,
+      correlationId: req.correlationId,
+    });
+    return res.status(status).send(data);
+  }
 
   @Get('me')
   @ApiOperation({ summary: 'Get own profile' })

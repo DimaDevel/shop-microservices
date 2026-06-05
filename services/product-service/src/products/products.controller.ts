@@ -6,6 +6,7 @@ import {
   Delete,
   Body,
   Param,
+  Query,
   ParseUUIDPipe,
   NotFoundException,
   BadRequestException,
@@ -14,7 +15,7 @@ import {
   HttpCode,
 } from '@nestjs/common';
 import { ProductsService } from './products.service';
-import { CreateProductDto, UpdateProductDto, ReserveStockDto } from './products.dto';
+import { CreateProductDto, UpdateProductDto, ReserveStockDto, PaginationQueryDto } from './products.dto';
 import { HEADERS, Role } from '@nest-gateway/shared';
 import { ProductNotFoundError, InsufficientStockError } from './products.errors';
 
@@ -23,8 +24,8 @@ export class ProductsController {
   constructor(private readonly productsService: ProductsService) {}
 
   @Get()
-  findAll() {
-    return this.productsService.findAll();
+  findAll(@Query() query: PaginationQueryDto) {
+    return this.productsService.findAll({ page: query.page, limit: query.limit });
   }
 
   @Get(':id')

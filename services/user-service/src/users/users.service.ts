@@ -2,8 +2,9 @@ import { Injectable, NotFoundException, ForbiddenException } from '@nestjs/commo
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { ProfileEntity } from './profile.entity';
-import { UpdateProfileInput } from './users.inputs';
+import { FindAllUsersInput, UpdateProfileInput } from './users.inputs';
 import { ProfileResult } from './users.outputs';
+import { PaginatedResult } from '@nest-gateway/shared';
 import { Role } from '@nest-gateway/shared';
 
 @Injectable()
@@ -12,6 +13,23 @@ export class UsersService {
     @InjectRepository(ProfileEntity)
     private readonly profilesRepo: Repository<ProfileEntity>,
   ) {}
+
+  async findAll(input: FindAllUsersInput, requesterRoles: Role[]): Promise<PaginatedResult<ProfileResult>> {
+    if (!requesterRoles.includes(Role.ADMIN)) {
+      throw new ForbiddenException('Only admins can list users');
+    }
+    const { page, limit } = input;
+    const [profiles, total] = await this.profilesRepo.findAndCount({
+      where: { isActive: true },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return {
+      data: profiles.map(this.toResult),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
+  }
 
   async findById(id: string, requesterId: string, requesterRoles: Role[]): Promise<ProfileResult> {
     const profile = await this.profilesRepo.findOne({ where: { id, isActive: true } });

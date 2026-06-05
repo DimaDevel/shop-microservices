@@ -32,6 +32,7 @@ describe('UsersService', () => {
   beforeEach(async () => {
     profilesRepo = {
       findOne: jest.fn(),
+      findAndCount: jest.fn(),
       save: jest.fn(),
       create: jest.fn(),
     };
@@ -44,6 +45,25 @@ describe('UsersService', () => {
   });
 
   afterEach(() => jest.clearAllMocks());
+
+  describe('findAll', () => {
+    it('returns paginated profiles with correct meta for admin', async () => {
+      profilesRepo.findAndCount.mockResolvedValue([[makeProfile(), makeProfile({ id: 'uuid-2', email: 'b@example.com' })], 2]);
+
+      const result = await service.findAll({ page: 1, limit: 20 }, [Role.ADMIN]);
+
+      expect(profilesRepo.findAndCount).toHaveBeenCalledWith(
+        expect.objectContaining({ skip: 0, take: 20 }),
+      );
+      expect(result.data).toHaveLength(2);
+      expect(result.meta).toEqual({ page: 1, limit: 20, total: 2, totalPages: 1 });
+    });
+
+    it('throws ForbiddenException when requester is not an admin', async () => {
+      await expect(service.findAll({ page: 1, limit: 20 }, [Role.USER])).rejects.toThrow(ForbiddenException);
+      expect(profilesRepo.findAndCount).not.toHaveBeenCalled();
+    });
+  });
 
   describe('findById', () => {
     it('returns profile when requester is the owner', async () => {

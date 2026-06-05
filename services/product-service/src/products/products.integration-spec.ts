@@ -84,11 +84,11 @@ describe('ProductsService (integration)', () => {
       const inactive = await service.create({ name: 'Inactive', description: '', price: 1, stock: 1 });
       await service.remove(inactive.id);
 
-      const results = await service.findAll();
+      const { data } = await service.findAll({ page: 1, limit: 20 });
 
-      expect(results.every((p) => p.isActive)).toBe(true);
-      expect(results.find((p) => p.name === 'Active')).toBeTruthy();
-      expect(results.find((p) => p.name === 'Inactive')).toBeUndefined();
+      expect(data.every((p) => p.isActive)).toBe(true);
+      expect(data.find((p) => p.name === 'Active')).toBeTruthy();
+      expect(data.find((p) => p.name === 'Inactive')).toBeUndefined();
     });
   });
 

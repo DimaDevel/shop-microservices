@@ -1,5 +1,20 @@
-import { IsArray, IsUUID, IsInt, IsPositive, ValidateNested, ArrayMinSize } from 'class-validator';
+import { IsArray, IsUUID, IsInt, IsPositive, IsOptional, Min, Max, ValidateNested, ArrayMinSize } from 'class-validator';
 import { Type } from 'class-transformer';
+
+export class PaginationQueryDto {
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  page: number = 1;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  @Min(1)
+  @Max(100)
+  limit: number = 20;
+}
 
 export class OrderItemDto {
   @IsUUID()

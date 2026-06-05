@@ -100,12 +100,13 @@ describe('Orders API (e2e)', () => {
   });
 
   describe('GET /orders', () => {
-    it('returns orders for the authenticated user', async () => {
-      const { status, body } = await api.get<unknown[]>('/orders', userToken);
+    it('returns a paginated list of orders for the authenticated user', async () => {
+      const { status, body } = await api.get<{ data: unknown[]; meta: { page: number; limit: number; total: number; totalPages: number } }>('/orders', userToken);
 
       expect(status).toBe(200);
-      expect(Array.isArray(body)).toBe(true);
-      expect(body.length).toBeGreaterThanOrEqual(1);
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.data.length).toBeGreaterThanOrEqual(1);
+      expect(body.meta).toMatchObject({ page: 1, limit: 20 });
     });
 
     it('returns 401 without token', async () => {

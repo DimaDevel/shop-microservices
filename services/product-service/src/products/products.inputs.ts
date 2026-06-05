@@ -1,3 +1,8 @@
+export interface PaginateProductsInput {
+  page: number;
+  limit: number;
+}
+
 export interface CreateProductInput {
   name: string;
   description?: string;

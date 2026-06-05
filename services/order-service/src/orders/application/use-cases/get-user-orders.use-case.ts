@@ -2,14 +2,18 @@ import { Injectable, Inject } from '@nestjs/common';
 import { IOrderRepository, ORDER_REPOSITORY } from '../../domain/repositories/order.repository';
 import { OrderResult } from './create-order.use-case';
 import { Order } from '../../domain/entities/order';
+import { PaginatedResult } from '@nest-gateway/shared';
 
 @Injectable()
 export class GetUserOrdersUseCase {
   constructor(@Inject(ORDER_REPOSITORY) private readonly orderRepo: IOrderRepository) {}
 
-  async execute(userId: string): Promise<OrderResult[]> {
-    const orders = await this.orderRepo.findByUser(userId);
-    return orders.map(this.toResult);
+  async execute(userId: string, page: number, limit: number): Promise<PaginatedResult<OrderResult>> {
+    const { items, total } = await this.orderRepo.findByUser(userId, page, limit);
+    return {
+      data: items.map(this.toResult),
+      meta: { page, limit, total, totalPages: Math.ceil(total / limit) },
+    };
   }
 
   private toResult(order: Order): OrderResult {

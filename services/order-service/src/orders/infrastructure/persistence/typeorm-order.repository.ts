@@ -19,10 +19,14 @@ export class TypeOrmOrderRepository implements IOrderRepository {
     const orm = await repo.findOne({ where: { id } });
     return orm ? OrderMapper.toDomain(orm) : null;
   }
-
-  async findByUser(userId: string): Promise<Order[]> {
-    const orms = await this.repo.find({ where: { userId } });
-    return orms.map(OrderMapper.toDomain);
+  async findByUser(userId: string, page: number, limit: number): Promise<{ items: Order[]; total: number }> {
+    const [orms, total] = await this.repo.findAndCount({
+      where: { userId },
+      order: { createdAt: 'DESC' },
+      skip: (page - 1) * limit,
+      take: limit,
+    });
+    return { items: orms.map(OrderMapper.toDomain), total };
   }
 
   async save(data: Order, manager?: EntityManager): Promise<Order> {

@@ -4,13 +4,14 @@ import {
   Post,
   Body,
   Param,
+  Query,
   ParseUUIDPipe,
   Headers,
   HttpCode,
   NotFoundException,
   UnauthorizedException,
 } from '@nestjs/common';
-import { CreateOrderDto } from './orders.dto';
+import { CreateOrderDto, PaginationQueryDto } from './orders.dto';
 import { HEADERS } from '@nest-gateway/shared';
 import { CreateOrderUseCase } from './application/use-cases/create-order.use-case';
 import { GetOrderUseCase } from './application/use-cases/get-order.use-case';
@@ -38,9 +39,9 @@ export class OrdersController {
   }
 
   @Get()
-  findAll(@Headers(HEADERS.USER_ID) userId: string) {
+  findAll(@Query() query: PaginationQueryDto, @Headers(HEADERS.USER_ID) userId: string) {
     if (!userId) throw new UnauthorizedException('Missing user id');
-    return this.getUserOrdersUseCase.execute(userId);
+    return this.getUserOrdersUseCase.execute(userId, query.page, query.limit);
   }
 
   @Get(':id')

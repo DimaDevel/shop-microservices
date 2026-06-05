@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Patch, Delete, Body, Param, Req, Res, HttpCode } from '@nestjs/common';
+import { Controller, Get, Post, Patch, Delete, Body, Param, Query, Req, Res, HttpCode } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CurrentUser, RequestUser, Roles, Role } from '@nest-gateway/shared';
@@ -14,15 +14,21 @@ export class ProductsProxyController {
 
   @Get()
   @ApiOperation({ summary: 'List all products' })
-  @ApiResponse({ status: 200, description: 'Array of products', type: [ProductDto] })
+  @ApiResponse({ status: 200, description: 'Paginated products', type: [ProductDto] })
   async findAll(
+    @Query('page') page: string,
+    @Query('limit') limit: string,
     @Req() req: FastifyRequest & { correlationId?: string },
     @Res() res: FastifyReply,
     @CurrentUser() user: RequestUser,
   ) {
+    const qs = new URLSearchParams();
+    if (page) qs.set('page', page);
+    if (limit) qs.set('limit', limit);
+    const query = qs.toString();
     const { status, data } = await this.proxyService.proxyToProducts({
       method: 'GET',
-      path: '/products',
+      path: query ? `/products?${query}` : '/products',
       user,
       correlationId: req.correlationId,
     });

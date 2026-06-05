@@ -23,11 +23,13 @@ describe('Products API (e2e)', () => {
   });
 
   describe('GET /products', () => {
-    it('returns an array of products for authenticated user', async () => {
-      const { status, body } = await api.get<unknown[]>('/products', userToken);
+    it('returns a paginated list of products for authenticated user', async () => {
+      const { status, body } = await api.get<{ data: unknown[]; meta: { page: number; limit: number; total: number; totalPages: number } }>('/products', userToken);
 
       expect(status).toBe(200);
-      expect(Array.isArray(body)).toBe(true);
+      expect(Array.isArray(body.data)).toBe(true);
+      expect(body.meta).toMatchObject({ page: 1, limit: 20 });
+      expect(typeof body.meta.total).toBe('number');
     });
 
     it('returns 401 without token', async () => {
