@@ -159,9 +159,11 @@ When adding a new route: mark public endpoints with `@Public()`, restrict by rol
 
 The gateway uses `ValidationPipe({ whitelist: true, transform: true, forbidNonWhitelisted: true })` globally. All gateway DTO classes must use `class-validator` decorators; unknown fields are rejected with 400.
 
-## Clean Architecture
+## Clean Architecture (order-service only)
 
-This project follows Clean Architecture. The Dependency Rule applies: **source code dependencies must point inward only**.
+Clean Architecture is applied to **order-service** — the most complex service due to its saga orchestration and multi-step business rules. The other services (auth, user, product, payment, notification) use TypeORM entities directly in their service classes; do not refactor them toward CA unless their complexity grows to justify it.
+
+For order-service, the Dependency Rule applies: **source code dependencies must point inward only**.
 
 ```
 Frameworks & Drivers  (NestJS, Fastify, TypeORM, KafkaJS, PostgreSQL)

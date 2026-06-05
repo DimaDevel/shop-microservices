@@ -1,6 +1,6 @@
 # NestJS Microservices Gateway
 
-A production-grade microservices architecture built with NestJS + TypeScript, demonstrating clean architecture patterns, event-driven sagas, and API gateway design.
+A production-grade microservices architecture built with NestJS + TypeScript, demonstrating event-driven sagas, API gateway design, and clean architecture applied to the most complex service.
 
 ## Stack
 
@@ -87,16 +87,20 @@ x-roles          → comma-separated roles (e.g. "user,admin")
 x-correlation-id → trace ID for log correlation
 ```
 
-### Clean Architecture
+### Clean Architecture (order-service)
 
-Each service follows the Dependency Rule (dependencies point inward only):
+Clean Architecture is applied to **order-service** — the most complex service in the system. The other services (auth, user, product, payment, notification) use TypeORM entities directly in their service classes, which is appropriate for their lower complexity.
+
+order-service follows the Dependency Rule (dependencies point inward only):
 
 ```
-Frameworks & Drivers  (NestJS, Fastify, TypeORM, KafkaJS, PostgreSQL)
+Frameworks & Drivers  (NestJS, TypeORM, KafkaJS, PostgreSQL)
 Interface Adapters    (Controllers, DTOs, entity mappers, Kafka consumers)
 Use Cases             (one class per use case, orchestrates domain + repositories)
 Entities              (pure domain objects, errors, repository interfaces)
 ```
+
+Apply this layering to other services only when complexity justifies it — e.g., if a service grows its own saga, multi-step business rules, or needs to be tested independently of infrastructure.
 
 ## Quick Start
 
