@@ -1,4 +1,4 @@
-import { Controller, Get, Patch, Delete, Param, Query, Body, Req, Res, HttpCode } from '@nestjs/common';
+import { Controller, Get, Patch, Delete, Param, Query, Body, Req, Res } from '@nestjs/common';
 import { ApiTags, ApiBearerAuth, ApiOperation, ApiParam, ApiBody, ApiResponse } from '@nestjs/swagger';
 import { FastifyRequest, FastifyReply } from 'fastify';
 import { CurrentUser, Roles, Role, RequestUser } from '@nest-gateway/shared';
