@@ -34,7 +34,6 @@ describe('AuthService', () => {
   let service: AuthService;
   let usersRepo: Record<string, jest.Mock>;
   let jwtService: jest.Mocked<JwtService>;
-  let configService: jest.Mocked<ConfigService>;
   let dataSource: jest.Mocked<DataSource>;
   let outboxService: jest.Mocked<AuthOutboxService>;
 
@@ -93,7 +92,6 @@ describe('AuthService', () => {
 
     service = module.get(AuthService);
     jwtService = module.get(JwtService);
-    configService = module.get(ConfigService);
 
     (jwtService.signAsync as jest.Mock).mockResolvedValue('signed-token');
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
