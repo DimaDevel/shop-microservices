@@ -32,6 +32,7 @@ export class KafkaConsumerService implements OnModuleInit, OnApplicationBootstra
       await this.consumer.subscribe({ topic: sub.topic, fromBeginning: false });
     }
     if (this.subscriptions.length > 0) {
+      // Start the KafkaJS polling loop; routes each incoming message to this.dispatch()
       await this.consumer.run({ eachMessage: (p) => this.dispatch(p) });
       this.logger.log(
         `Kafka consumer started (group: ${this.options.groupId}) topics: ${this.subscriptions.map((s) => s.topic).join(', ')}`,
@@ -59,7 +60,9 @@ export class KafkaConsumerService implements OnModuleInit, OnApplicationBootstra
       return;
     }
 
+    // Route the message to the handler registered for this topic
     const sub = this.subscriptions.find((s) => s.topic === topic);
+    // No handler registered — silently ignore (shouldn't happen in practice)
     if (!sub) return;
 
     const parentCtx = propagation.extract(context.active(), {
