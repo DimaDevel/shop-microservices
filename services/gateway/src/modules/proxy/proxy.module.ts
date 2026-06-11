@@ -10,7 +10,13 @@ import { PaymentsProxyController } from './payments-proxy.controller';
 @Module({
   imports: [AuthModule],
   providers: [ProxyService],
-  controllers: [AuthProxyController, UsersProxyController, ProductsProxyController, OrdersProxyController, PaymentsProxyController],
+  controllers: [
+    AuthProxyController,
+    UsersProxyController,
+    ProductsProxyController,
+    OrdersProxyController,
+    PaymentsProxyController,
+  ],
   exports: [ProxyService],
 })
 export class ProxyModule {}

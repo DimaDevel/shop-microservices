@@ -81,9 +81,9 @@ describe('UserEventsConsumer', () => {
     it('propagates errors so the Kafka consumer can retry / DLQ', async () => {
       usersService.createProfile.mockRejectedValue(new Error('db unavailable'));
 
-      await expect(
-        capturedHandler(makeEnvelope({ userId: 'u-1', email: 'user@example.com' })),
-      ).rejects.toThrow('db unavailable');
+      await expect(capturedHandler(makeEnvelope({ userId: 'u-1', email: 'user@example.com' }))).rejects.toThrow(
+        'db unavailable',
+      );
     });
   });
 });

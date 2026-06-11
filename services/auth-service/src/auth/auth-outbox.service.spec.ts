@@ -18,7 +18,10 @@ describe('AuthOutboxService', () => {
   });
 
   it('creates and saves an outbox record via the manager', async () => {
-    await service.write(mockManager as any, 'agg-1', 'users.user-registered', 'agg-1', { userId: 'u1', email: 'u@test.com' });
+    await service.write(mockManager as any, 'agg-1', 'users.user-registered', 'agg-1', {
+      userId: 'u1',
+      email: 'u@test.com',
+    });
 
     expect(mockManager.getRepository).toHaveBeenCalledWith(AuthOutboxEntity);
     expect(mockRepo.create).toHaveBeenCalledWith({
@@ -33,8 +36,6 @@ describe('AuthOutboxService', () => {
   it('propagates save errors', async () => {
     mockRepo.save.mockRejectedValue(new Error('db write failed'));
 
-    await expect(
-      service.write(mockManager as any, 'agg-1', 'topic', 'key', {}),
-    ).rejects.toThrow('db write failed');
+    await expect(service.write(mockManager as any, 'agg-1', 'topic', 'key', {})).rejects.toThrow('db write failed');
   });
 });

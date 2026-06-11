@@ -37,7 +37,7 @@ export class AuthOutboxProcessorService {
         for (const record of records) {
           try {
             await this.kafkaProducer.publish(record.topic, record.payload, {
-              correlationId: (record.payload as Record<string, unknown>)?.correlationId as string ?? '',
+              correlationId: ((record.payload as Record<string, unknown>)?.correlationId as string) ?? '',
               messageId: record.id,
             });
             await manager.getRepository(AuthOutboxEntity).update(record.id, {

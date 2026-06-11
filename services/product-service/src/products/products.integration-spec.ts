@@ -38,10 +38,7 @@ describe('ProductsService (integration)', () => {
         }),
         TypeOrmModule.forFeature([ProductEntity]),
       ],
-      providers: [
-        ProductsService,
-        { provide: CACHE_MANAGER, useValue: nullCacheManager },
-      ],
+      providers: [ProductsService, { provide: CACHE_MANAGER, useValue: nullCacheManager }],
     }).compile();
 
     service = module.get(ProductsService);
@@ -103,9 +100,7 @@ describe('ProductsService (integration)', () => {
     });
 
     it('throws ProductNotFoundError for unknown id', async () => {
-      await expect(
-        service.findById('00000000-0000-0000-0000-000000000000'),
-      ).rejects.toThrow(ProductNotFoundError);
+      await expect(service.findById('00000000-0000-0000-0000-000000000000')).rejects.toThrow(ProductNotFoundError);
     });
 
     it('throws ProductNotFoundError for soft-deleted product', async () => {
@@ -134,9 +129,9 @@ describe('ProductsService (integration)', () => {
     });
 
     it('throws ProductNotFoundError for unknown id', async () => {
-      await expect(
-        service.update('00000000-0000-0000-0000-000000000000', { price: 1 }),
-      ).rejects.toThrow(ProductNotFoundError);
+      await expect(service.update('00000000-0000-0000-0000-000000000000', { price: 1 })).rejects.toThrow(
+        ProductNotFoundError,
+      );
     });
   });
 
@@ -146,9 +141,7 @@ describe('ProductsService (integration)', () => {
 
       await service.remove(product.id);
 
-      const [row] = await dataSource.query(
-        `SELECT "isActive" FROM products WHERE id = '${product.id}'`,
-      );
+      const [row] = await dataSource.query(`SELECT "isActive" FROM products WHERE id = '${product.id}'`);
       expect(row.isActive).toBe(false);
     });
 
@@ -177,9 +170,9 @@ describe('ProductsService (integration)', () => {
     it('throws InsufficientStockError when quantity exceeds stock', async () => {
       const product = await service.create({ name: 'LowStock', description: '', price: 1, stock: 2 });
 
-      await expect(
-        service.reserveStock({ items: [{ productId: product.id, quantity: 5 }] }),
-      ).rejects.toThrow(InsufficientStockError);
+      await expect(service.reserveStock({ items: [{ productId: product.id, quantity: 5 }] })).rejects.toThrow(
+        InsufficientStockError,
+      );
 
       // Stock must remain unchanged after the failed reservation
       const found = await service.findById(product.id);
@@ -217,9 +210,7 @@ describe('ProductsService (integration)', () => {
       const product = await service.create({ name: 'Releasable', description: '', price: 1, stock: 10 });
       await service.reserveStock({ items: [{ productId: product.id, quantity: 4 }] });
 
-      await dataSource.transaction((mgr) =>
-        service.releaseStock([{ productId: product.id, quantity: 4 }], mgr),
-      );
+      await dataSource.transaction((mgr) => service.releaseStock([{ productId: product.id, quantity: 4 }], mgr));
 
       const found = await service.findById(product.id);
       expect(found.stock).toBe(10);

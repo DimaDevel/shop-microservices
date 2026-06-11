@@ -76,7 +76,10 @@ export class UsersProxyController {
   }
 
   @Patch(':id')
-  @ApiOperation({ summary: 'Update a user profile', description: 'Any authenticated user may update their own profile. All fields are optional.' })
+  @ApiOperation({
+    summary: 'Update a user profile',
+    description: 'Any authenticated user may update their own profile. All fields are optional.',
+  })
   @ApiParam({ name: 'id', description: 'User UUID' })
   @ApiBody({ type: UpdateUserRequestDto })
   @ApiResponse({ status: 200, description: 'Updated user profile', type: UserProfileDto })

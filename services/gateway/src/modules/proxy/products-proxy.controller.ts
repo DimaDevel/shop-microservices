@@ -79,7 +79,10 @@ export class ProductsProxyController {
 
   @Patch(':id')
   @Roles(Role.ADMIN)
-  @ApiOperation({ summary: 'Update a product (Admin only)', description: 'Requires the `admin` role. All fields are optional.' })
+  @ApiOperation({
+    summary: 'Update a product (Admin only)',
+    description: 'Requires the `admin` role. All fields are optional.',
+  })
   @ApiParam({ name: 'id', description: 'Product UUID' })
   @ApiBody({ type: UpdateProductRequestDto })
   @ApiResponse({ status: 200, description: 'Updated product', type: ProductDto })

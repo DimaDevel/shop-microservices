@@ -1,4 +1,11 @@
-import { Injectable, Logger, ServiceUnavailableException, BadGatewayException, HttpException, OnModuleInit } from '@nestjs/common';
+import {
+  Injectable,
+  Logger,
+  ServiceUnavailableException,
+  BadGatewayException,
+  HttpException,
+  OnModuleInit,
+} from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import CircuitBreaker from 'opossum';
 import { HEADERS, RequestUser } from '@nest-gateway/shared';
@@ -106,13 +113,13 @@ export class ProxyService implements OnModuleInit {
 
     let response: Response;
     try {
-      response = await breaker.fire(() =>
+      response = (await breaker.fire(() =>
         fetch(url, {
           method,
           headers: proxyHeaders,
           body: body ? JSON.stringify(body) : undefined,
         }),
-      ) as Response;
+      )) as Response;
     } catch (err) {
       const error = err as Error & { code?: string };
       if (error.code === 'EOPENBREAKER' || error.message?.includes('Breaker is open')) {

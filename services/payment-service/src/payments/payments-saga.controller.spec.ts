@@ -56,8 +56,7 @@ describe('PaymentsSagaController', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  const dispatch = (payload = command) =>
-    handlers.get(KAFKA_TOPICS.PROCESS_PAYMENT)!({ payload });
+  const dispatch = (payload = command) => handlers.get(KAFKA_TOPICS.PROCESS_PAYMENT)!({ payload });
 
   describe('happy path', () => {
     it('writes PAYMENT_PROCESSED to outbox when payment succeeds', async () => {
@@ -109,8 +108,8 @@ describe('PaymentsSagaController', () => {
 
       await dispatch();
 
-      const successCalls = outboxService.write.mock.calls.filter((args: unknown[]) =>
-        args[2] === KAFKA_TOPICS.PAYMENT_PROCESSED,
+      const successCalls = outboxService.write.mock.calls.filter(
+        (args: unknown[]) => args[2] === KAFKA_TOPICS.PAYMENT_PROCESSED,
       );
       expect(successCalls).toHaveLength(0);
     });

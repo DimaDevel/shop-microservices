@@ -48,13 +48,14 @@ describe('UsersService', () => {
 
   describe('findAll', () => {
     it('returns paginated profiles with correct meta for admin', async () => {
-      profilesRepo.findAndCount.mockResolvedValue([[makeProfile(), makeProfile({ id: 'uuid-2', email: 'b@example.com' })], 2]);
+      profilesRepo.findAndCount.mockResolvedValue([
+        [makeProfile(), makeProfile({ id: 'uuid-2', email: 'b@example.com' })],
+        2,
+      ]);
 
       const result = await service.findAll({ page: 1, limit: 20 }, [Role.ADMIN]);
 
-      expect(profilesRepo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 20 }),
-      );
+      expect(profilesRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({ skip: 0, take: 20 }));
       expect(result.data).toHaveLength(2);
       expect(result.meta).toEqual({ page: 1, limit: 20, total: 2, totalPages: 1 });
     });
@@ -138,7 +139,13 @@ describe('UsersService', () => {
 
     it('updates extended profile fields (phone, dateOfBirth, address)', async () => {
       const profile = makeProfile();
-      const input = { phone: '+380501234567', dateOfBirth: '1990-05-15', city: 'Kyiv', country: 'UA', postalCode: '01001' };
+      const input = {
+        phone: '+380501234567',
+        dateOfBirth: '1990-05-15',
+        city: 'Kyiv',
+        country: 'UA',
+        postalCode: '01001',
+      };
       const updated = { ...profile, ...input };
       profilesRepo.findOne.mockResolvedValue(profile);
       profilesRepo.save.mockResolvedValue(updated);

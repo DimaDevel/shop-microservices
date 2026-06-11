@@ -133,9 +133,7 @@ describe('AuthOutboxProcessorService', () => {
       const r1 = makeRecord({ id: 'rec-1' });
       const r2 = makeRecord({ id: 'rec-2', payload: { userId: 'u2', email: 'b@test.com' } });
       manager._qb.getMany.mockResolvedValue([r1, r2]);
-      kafkaProducer.publish
-        .mockRejectedValueOnce(new Error('transient'))
-        .mockResolvedValueOnce(undefined);
+      kafkaProducer.publish.mockRejectedValueOnce(new Error('transient')).mockResolvedValueOnce(undefined);
 
       await processor.processPending();
 
@@ -150,7 +148,9 @@ describe('AuthOutboxProcessorService', () => {
       // Simulate slow transaction that has not yet resolved
       let resolveTransaction!: (value?: unknown) => void;
       (dataSource.transaction as jest.Mock).mockReturnValueOnce(
-        new Promise((resolve) => { resolveTransaction = resolve; }),
+        new Promise((resolve) => {
+          resolveTransaction = resolve;
+        }),
       );
 
       const first = processor.processPending();

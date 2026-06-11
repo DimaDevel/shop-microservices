@@ -25,7 +25,10 @@ export class HealthController {
   @Public()
   @Get()
   @HealthCheck()
-  @ApiOperation({ summary: 'Service health check', description: 'Reports memory heap usage and circuit breaker state for each downstream service.' })
+  @ApiOperation({
+    summary: 'Service health check',
+    description: 'Reports memory heap usage and circuit breaker state for each downstream service.',
+  })
   @ApiResponse({ status: 200, description: 'All services healthy' })
   @ApiResponse({ status: 503, description: 'One or more circuit breakers are open' })
   check() {

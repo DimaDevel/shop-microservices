@@ -100,17 +100,15 @@ describe('AuthService (integration)', () => {
     it('throws EmailAlreadyTakenError on duplicate email', async () => {
       await service.register({ email: 'bob@example.com', password: 'pass1234' });
 
-      await expect(
-        service.register({ email: 'bob@example.com', password: 'different1' }),
-      ).rejects.toThrow(EmailAlreadyTakenError);
+      await expect(service.register({ email: 'bob@example.com', password: 'different1' })).rejects.toThrow(
+        EmailAlreadyTakenError,
+      );
     });
 
     it('stores a bcrypt hash, not the plain password', async () => {
       await service.register({ email: 'carol@example.com', password: 'mySecret1' });
 
-      const [user] = await dataSource.query(
-        `SELECT "passwordHash" FROM users WHERE email = 'carol@example.com'`,
-      );
+      const [user] = await dataSource.query(`SELECT "passwordHash" FROM users WHERE email = 'carol@example.com'`);
       expect(user.passwordHash).not.toBe('mySecret1');
       expect(user.passwordHash).toMatch(/^\$2[aby]\$/);
     });
@@ -129,15 +127,15 @@ describe('AuthService (integration)', () => {
     });
 
     it('throws InvalidCredentialsError for wrong password', async () => {
-      await expect(
-        service.login({ email: 'dave@example.com', password: 'wrongPass1' }),
-      ).rejects.toThrow(InvalidCredentialsError);
+      await expect(service.login({ email: 'dave@example.com', password: 'wrongPass1' })).rejects.toThrow(
+        InvalidCredentialsError,
+      );
     });
 
     it('throws InvalidCredentialsError for unknown email', async () => {
-      await expect(
-        service.login({ email: 'ghost@example.com', password: 'pass1234' }),
-      ).rejects.toThrow(InvalidCredentialsError);
+      await expect(service.login({ email: 'ghost@example.com', password: 'pass1234' })).rejects.toThrow(
+        InvalidCredentialsError,
+      );
     });
   });
 
@@ -153,9 +151,7 @@ describe('AuthService (integration)', () => {
       expect(result.accessToken).toBeTruthy();
       expect(result.refreshToken).not.toBe(refreshToken);
 
-      const [user] = await dataSource.query(
-        `SELECT "refreshToken" FROM users WHERE id = '${userId}'`,
-      );
+      const [user] = await dataSource.query(`SELECT "refreshToken" FROM users WHERE id = '${userId}'`);
       expect(user.refreshToken).not.toBe(refreshToken);
     });
 
@@ -180,9 +176,7 @@ describe('AuthService (integration)', () => {
 
       await service.logout(userId);
 
-      const [user] = await dataSource.query(
-        `SELECT "refreshToken" FROM users WHERE id = '${userId}'`,
-      );
+      const [user] = await dataSource.query(`SELECT "refreshToken" FROM users WHERE id = '${userId}'`);
       expect(user.refreshToken).toBeNull();
     });
 

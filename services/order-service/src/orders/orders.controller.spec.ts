@@ -70,7 +70,10 @@ describe('OrdersController', () => {
 
   describe('GET /orders', () => {
     it('returns paginated orders for the user', async () => {
-      const paginated = { data: [makeResult('order-1'), makeResult('order-2')], meta: { page: 1, limit: 20, total: 2, totalPages: 1 } };
+      const paginated = {
+        data: [makeResult('order-1'), makeResult('order-2')],
+        meta: { page: 1, limit: 20, total: 2, totalPages: 1 },
+      };
       getUserUseCase.execute.mockResolvedValue(paginated);
 
       const result = await controller.findAll({ page: 1, limit: 20 } as any, 'user-1');

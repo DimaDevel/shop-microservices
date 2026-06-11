@@ -47,9 +47,7 @@ describe('WalletService (integration)', () => {
 
   describe('findOrCreate', () => {
     it('persists a new wallet with the given initial balance', async () => {
-      const wallet = await dataSource.transaction((mgr) =>
-        service.findOrCreate('user-1', 10_000, mgr),
-      );
+      const wallet = await dataSource.transaction((mgr) => service.findOrCreate('user-1', 10_000, mgr));
 
       expect(wallet.userId).toBe('user-1');
       expect(Number(wallet.balance)).toBe(10_000);
@@ -62,9 +60,7 @@ describe('WalletService (integration)', () => {
       await dataSource.transaction((mgr) => service.findOrCreate('user-2', 10_000, mgr));
       await dataSource.transaction((mgr) => service.deduct('user-2', 500, mgr));
 
-      const wallet = await dataSource.transaction((mgr) =>
-        service.findOrCreate('user-2', 10_000, mgr),
-      );
+      const wallet = await dataSource.transaction((mgr) => service.findOrCreate('user-2', 10_000, mgr));
 
       expect(Number(wallet.balance)).toBe(9_500);
     });
@@ -83,9 +79,9 @@ describe('WalletService (integration)', () => {
     });
 
     it('throws InsufficientFundsError and leaves balance unchanged when funds are too low', async () => {
-      await expect(
-        dataSource.transaction((mgr) => service.deduct('user-3', 2_000, mgr)),
-      ).rejects.toThrow(InsufficientFundsError);
+      await expect(dataSource.transaction((mgr) => service.deduct('user-3', 2_000, mgr))).rejects.toThrow(
+        InsufficientFundsError,
+      );
 
       const [row] = await dataSource.query(`SELECT balance FROM user_wallets WHERE "userId" = 'user-3'`);
       expect(Number(row.balance)).toBe(1_000);

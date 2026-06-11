@@ -60,9 +60,7 @@ describe('ProductsService', () => {
 
       const result = await service.findAll({ page: 1, limit: 20 });
 
-      expect(mockRepo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 0, take: 20 }),
-      );
+      expect(mockRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({ skip: 0, take: 20 }));
       expect(result.data).toHaveLength(1);
       expect(result.meta).toEqual({ page: 1, limit: 20, total: 1, totalPages: 1 });
     });
@@ -72,9 +70,7 @@ describe('ProductsService', () => {
 
       await service.findAll({ page: 2, limit: 10 });
 
-      expect(mockRepo.findAndCount).toHaveBeenCalledWith(
-        expect.objectContaining({ skip: 10, take: 10 }),
-      );
+      expect(mockRepo.findAndCount).toHaveBeenCalledWith(expect.objectContaining({ skip: 10, take: 10 }));
     });
   });
 

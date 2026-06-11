@@ -22,9 +22,7 @@ export class WalletsController {
     if (requesterId !== userId && !roles.includes(Role.ADMIN)) {
       throw new ForbiddenException('Access denied');
     }
-    const wallet = await this.dataSource.transaction((manager) =>
-      this.walletService.getBalance(userId, manager),
-    );
+    const wallet = await this.dataSource.transaction((manager) => this.walletService.getBalance(userId, manager));
     return { userId: wallet.userId, balance: Number(wallet.balance) };
   }
 

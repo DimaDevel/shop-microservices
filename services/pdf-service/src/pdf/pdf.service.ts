@@ -18,7 +18,10 @@ export class PdfService {
   async generateOrderPdf(event: OrderConfirmedEvent): Promise<void> {
     const pdfPath = path.join(this.pdfDir, `order-${event.orderId}.pdf`);
 
-    const exists = await fsp.access(pdfPath).then(() => true).catch(() => false);
+    const exists = await fsp
+      .access(pdfPath)
+      .then(() => true)
+      .catch(() => false);
     if (exists) {
       this.logger.warn(`[${event.correlationId}] PDF already exists for order ${event.orderId}, re-emitting event`);
     } else {

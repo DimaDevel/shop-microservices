@@ -13,7 +13,11 @@ export class OrdersProxyController {
   constructor(private readonly proxyService: ProxyService) {}
 
   @Post()
-  @ApiOperation({ summary: 'Place a new order', description: 'Triggers the order saga: reserves stock, processes payment, and confirms the order. Requires a valid Bearer token.' })
+  @ApiOperation({
+    summary: 'Place a new order',
+    description:
+      'Triggers the order saga: reserves stock, processes payment, and confirms the order. Requires a valid Bearer token.',
+  })
   @ApiBody({ type: CreateOrderRequestDto })
   @ApiResponse({ status: 201, description: 'Order created and saga initiated', type: OrderDto })
   @ApiResponse({ status: 400, description: 'Invalid order data', type: ApiErrorDto })
