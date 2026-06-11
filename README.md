@@ -155,6 +155,52 @@ npm test --prefix services/order-service          # single service
 npm run test:cov --prefix services/auth-service   # with coverage
 ```
 
+### Load tests
+
+Scripts live in `load-tests/k6/`. [k6](https://k6.io) must be installed once:
+
+```bash
+brew install k6
+```
+
+Start the stack using the test overlay, which exposes the gateway directly on `:3000` and bypasses Nginx rate limiting so results reflect gateway throughput, not proxy limits:
+
+```bash
+docker compose -f docker-compose.yml -f docker-compose.test.yml up -d
+```
+
+**Run order (always start with smoke):**
+
+```bash
+# 1. Smoke — 5 VUs / 30s, verifies the full stack is reachable
+k6 run --env API_URL=http://localhost:3000 load-tests/k6/smoke.js
+
+# 2. Scenario: auth service — login + refresh token rotation under load
+k6 run --env API_URL=http://localhost:3000 load-tests/k6/scenarios/auth.js
+
+# 3. Scenario: products — Redis-cached read path, target p99 < 200ms at 200 VUs
+k6 run --env API_URL=http://localhost:3000 load-tests/k6/scenarios/products.js
+
+# 4. Scenario: orders — full saga flow (requires at least one product in the DB)
+k6 run --env API_URL=http://localhost:3000 load-tests/k6/scenarios/orders.js
+
+# 5. Stress — ramps to 500 VUs to find the saturation point (~8 min)
+k6 run --env API_URL=http://localhost:3000 load-tests/k6/stress.js
+
+# 6. Soak — 100 VUs for 30 min, detects memory leaks and connection drift
+k6 run --env API_URL=http://localhost:3000 load-tests/k6/soak.js
+```
+
+**What to watch during a run:**
+
+| Signal | Command |
+|---|---|
+| Container CPU / memory | `docker stats` |
+| Circuit breaker state | `curl localhost:3000/health` |
+| Gateway logs | `docker compose logs -f gateway` |
+
+> **Note:** `scenarios/orders.js` polls until the saga completes (`pending` → `confirmed` or `cancelled`). It requires at least one product in the database — create one via `POST /products` with an admin token before running this scenario.
+
 ---
 
 ## Swagger UI
