@@ -18,6 +18,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build shared packages
+        run: npm run build --prefix packages/kafka
+
       - name: Run integration tests
         run: npm run test:integration
         env:

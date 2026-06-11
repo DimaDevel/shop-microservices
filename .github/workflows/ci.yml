@@ -20,6 +20,9 @@ jobs:
 
       - run: npm ci
 
+      - name: Build shared packages
+        run: npm run build --prefix packages/kafka
+
       - name: Lint
         run: npm run lint
 
