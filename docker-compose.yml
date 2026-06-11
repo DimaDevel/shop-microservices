@@ -25,6 +25,7 @@ services:
       USER_SERVICE_URL: http://user-service:3002
       PRODUCT_SERVICE_URL: http://product-service:3003
       ORDER_SERVICE_URL: http://order-service:3004
+      PAYMENT_SERVICE_URL: http://payment-service:3007
       REQUEST_TIMEOUT_MS: 5000
       NODE_ENV: development
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
@@ -40,6 +41,8 @@ services:
         condition: service_healthy
       order-service:
         condition: service_healthy
+      payment-service:
+        condition: service_started
       redis:
         condition: service_healthy
     healthcheck:

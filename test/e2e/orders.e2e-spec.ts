@@ -15,7 +15,8 @@ describe('Orders API (e2e)', () => {
     const adminTokens = await promoteToAdmin(adminEmail);
     adminToken = adminTokens.accessToken;
 
-    // Create two products: one cheap (payment succeeds), one expensive (payment fails)
+    // Create two products: one cheap (total well within default wallet balance),
+    // one expensive (total exceeds default wallet balance so payment fails)
     const cheap = await api.post<{ id: string }>(
       '/products',
       { name: 'Cheap Widget', description: 'Test', price: 9.99, stock: 50 },
@@ -75,7 +76,7 @@ describe('Orders API (e2e)', () => {
       expect(confirmed.body.total).toBeCloseTo(2 * 9.99, 1);
     });
 
-    it('cancels the order when payment fails (total >= 10000)', async () => {
+    it('cancels the order when payment fails (total exceeds wallet balance)', async () => {
       const { status, body } = await api.post<{ id: string; status: string }>(
         '/orders',
         { items: [{ productId: expensiveProductId, quantity: 2 }] },

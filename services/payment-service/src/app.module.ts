@@ -8,6 +8,7 @@ import { PaymentsModule } from './payments/payments.module';
 import { PaymentEntity } from './payments/payment.entity';
 import { OutboxEntity } from './payments/outbox.entity';
 import { IdempotencyKeyEntity } from './payments/idempotency.entity';
+import { UserWalletEntity } from './payments/user-wallet.entity';
 import { HealthModule } from './health/health.module';
 import { InternalGuard } from './guards/internal.guard';
 
@@ -24,7 +25,7 @@ import { InternalGuard } from './guards/internal.guard';
         username: config.get('DB_USER', 'postgres'),
         password: config.get('DB_PASSWORD', 'postgres'),
         database: config.get('DB_NAME', 'payments_db'),
-        entities: [PaymentEntity, OutboxEntity, IdempotencyKeyEntity],
+        entities: [PaymentEntity, OutboxEntity, IdempotencyKeyEntity, UserWalletEntity],
         synchronize: config.get('NODE_ENV') !== 'production',
         logging: config.get('NODE_ENV') !== 'production',
       }),

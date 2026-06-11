@@ -5,7 +5,7 @@ import { PaymentsService } from './payments.service';
 import { IdempotencyService } from './idempotency.service';
 import { OutboxService } from './outbox.service';
 import { KAFKA_TOPICS, ProcessPaymentCommand, PaymentProcessedEvent, PaymentFailedEvent } from '@nest-gateway/shared';
-import { PaymentDeclinedError } from './payments.errors';
+import { InsufficientFundsError, PaymentDeclinedError } from './payments.errors';
 
 @Injectable()
 export class PaymentsSagaController implements OnModuleInit {
@@ -70,7 +70,7 @@ export class PaymentsSagaController implements OnModuleInit {
           reply,
         );
       } catch (e) {
-        if (!(e instanceof PaymentDeclinedError)) throw e;
+        if (!(e instanceof PaymentDeclinedError) && !(e instanceof InsufficientFundsError)) throw e;
         const reply: PaymentFailedEvent = {
           commandId: command.commandId,
           orderId: command.orderId,

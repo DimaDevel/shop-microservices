@@ -12,7 +12,7 @@ interface ProxyRequestOptions {
   headers?: Record<string, string>;
 }
 
-type ServiceName = 'authService' | 'userService' | 'productService' | 'orderService';
+type ServiceName = 'authService' | 'userService' | 'productService' | 'orderService' | 'paymentService';
 
 @Injectable()
 export class ProxyService implements OnModuleInit {
@@ -27,6 +27,7 @@ export class ProxyService implements OnModuleInit {
       userService: config.getOrThrow<string>('USER_SERVICE_URL'),
       productService: config.getOrThrow<string>('PRODUCT_SERVICE_URL'),
       orderService: config.getOrThrow<string>('ORDER_SERVICE_URL'),
+      paymentService: config.getOrThrow<string>('PAYMENT_SERVICE_URL'),
     };
   }
 
@@ -63,6 +64,10 @@ export class ProxyService implements OnModuleInit {
 
   async proxyToOrders(options: ProxyRequestOptions) {
     return this.proxy('orderService', options);
+  }
+
+  async proxyToPayments(options: ProxyRequestOptions) {
+    return this.proxy('paymentService', options);
   }
 
   getBreakersStatus() {

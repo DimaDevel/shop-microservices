@@ -4,3 +4,10 @@ export class PaymentDeclinedError extends Error {
     this.name = 'PaymentDeclinedError';
   }
 }
+
+export class InsufficientFundsError extends Error {
+  constructor(available: number, required: number) {
+    super(`Insufficient funds: available ${available}, required ${required}`);
+    this.name = 'InsufficientFundsError';
+  }
+}

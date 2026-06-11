@@ -3,7 +3,7 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { EntityManager, Repository } from 'typeorm';
 import { randomUUID } from 'crypto';
 import { PaymentEntity, PaymentStatus } from './payment.entity';
-import { PaymentDeclinedError } from './payments.errors';
+import { WalletService } from './wallet.service';
 
 export interface ProcessPaymentInput {
   orderId: string;
@@ -15,7 +15,6 @@ export interface ProcessPaymentResult {
   transactionId: string;
 }
 
-// Simulates a payment gateway. Replace with a real provider integration.
 @Injectable()
 export class PaymentsService {
   private readonly logger = new Logger(PaymentsService.name);
@@ -23,6 +22,7 @@ export class PaymentsService {
   constructor(
     @InjectRepository(PaymentEntity)
     private readonly paymentsRepo: Repository<PaymentEntity>,
+    private readonly walletService: WalletService,
   ) {}
 
   async processPayment(input: ProcessPaymentInput, manager: EntityManager): Promise<ProcessPaymentResult> {
@@ -37,16 +37,9 @@ export class PaymentsService {
       }),
     );
 
-    // Mock payment gateway: succeed for amounts under 10000, fail otherwise.
-    const success = input.amount < 10_000;
-
-    if (!success) {
-      await paymentRepository.update(payment.id, {
-        status: PaymentStatus.FAILED,
-        failureReason: 'Payment declined by gateway (amount exceeds limit)',
-      });
-      throw new PaymentDeclinedError('Payment declined by gateway (amount exceeds limit)');
-    }
+    // Deduct from wallet — throws InsufficientFundsError if balance is too low.
+    // The SELECT FOR UPDATE inside walletService.deduct prevents concurrent double-spending.
+    await this.walletService.deduct(input.userId, input.amount, manager);
 
     const transactionId = `txn-${randomUUID()}`;
     await paymentRepository.update(payment.id, { status: PaymentStatus.COMPLETED, transactionId });
