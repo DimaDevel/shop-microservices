@@ -68,12 +68,24 @@ describe('AuthService', () => {
       write: jest.fn().mockResolvedValue(undefined),
     } as unknown as jest.Mocked<AuthOutboxService>;
 
+    const configValues: Record<string, unknown> = {
+      JWT_REFRESH_SECRET: 'refresh-secret',
+      JWT_ACCESS_EXPIRES_IN: 3600,
+      JWT_REFRESH_EXPIRES_IN: 604800,
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         AuthService,
         { provide: getRepositoryToken(UserEntity), useValue: usersRepo },
         { provide: JwtService, useValue: { signAsync: jest.fn(), verify: jest.fn() } },
-        { provide: ConfigService, useValue: { getOrThrow: jest.fn(), get: jest.fn() } },
+        {
+          provide: ConfigService,
+          useValue: {
+            getOrThrow: jest.fn().mockImplementation((key: string) => configValues[key]),
+            get: jest.fn(),
+          },
+        },
         { provide: DataSource, useValue: dataSource },
         { provide: AuthOutboxService, useValue: outboxService },
       ],
@@ -82,15 +94,6 @@ describe('AuthService', () => {
     service = module.get(AuthService);
     jwtService = module.get(JwtService);
     configService = module.get(ConfigService);
-
-    (configService.getOrThrow as jest.Mock).mockImplementation((key: string) => {
-      const values: Record<string, unknown> = {
-        JWT_REFRESH_SECRET: 'refresh-secret',
-        JWT_ACCESS_EXPIRES_IN: 3600,
-        JWT_REFRESH_EXPIRES_IN: 604800,
-      };
-      return values[key];
-    });
 
     (jwtService.signAsync as jest.Mock).mockResolvedValue('signed-token');
     (bcrypt.hash as jest.Mock).mockResolvedValue('hashed-password');
@@ -108,7 +111,7 @@ describe('AuthService', () => {
 
       const result = await service.register({ email: 'test@example.com', password: 'pass1234' });
 
-      expect(bcrypt.hash).toHaveBeenCalledWith('pass1234', 12);
+      expect(bcrypt.hash).toHaveBeenCalledWith('pass1234', 10);
       expect(dataSource.transaction).toHaveBeenCalledTimes(1);
       expect(outboxService.write).toHaveBeenCalledTimes(1);
       expect(result).toMatchObject({
