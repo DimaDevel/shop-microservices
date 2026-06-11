@@ -65,6 +65,7 @@ services:
       INTERNAL_SECRET: ${INTERNAL_SECRET:-dev-internal-secret-32-chars!!}
       KAFKA_BROKERS: kafka:9092
       OUTBOX_MAX_RETRIES: 5
+      UV_THREADPOOL_SIZE: 16
       DB_HOST: auth-db
       DB_PORT: 5432
       DB_USER: postgres

@@ -21,6 +21,10 @@ import { AuthOutboxService } from './auth-outbox.service';
 export class AuthService {
   private readonly logger = new Logger(AuthService.name);
 
+  private readonly accessExpiresIn: number;
+  private readonly refreshExpiresIn: number;
+  private readonly refreshSecret: string;
+
   constructor(
     @InjectRepository(UserEntity)
     private readonly usersRepo: Repository<UserEntity>,
@@ -28,10 +32,14 @@ export class AuthService {
     private readonly config: ConfigService,
     private readonly dataSource: DataSource,
     private readonly outboxService: AuthOutboxService,
-  ) {}
+  ) {
+    this.accessExpiresIn = parseInt(config.getOrThrow('JWT_ACCESS_EXPIRES_IN'), 10) || 3600;
+    this.refreshExpiresIn = parseInt(config.getOrThrow('JWT_REFRESH_EXPIRES_IN'), 10) || 604800;
+    this.refreshSecret = config.getOrThrow('JWT_REFRESH_SECRET');
+  }
 
   async register(input: RegisterInput): Promise<TokensResult> {
-    const passwordHash = await bcrypt.hash(input.password, 12);
+    const passwordHash = await bcrypt.hash(input.password, 10);
 
     let user: UserEntity;
     try {
@@ -111,17 +119,14 @@ export class AuthService {
       jti: randomUUID(),
     };
 
-    const accessExpiresIn = parseInt(this.config.getOrThrow('JWT_ACCESS_EXPIRES_IN'), 10) || 3600;
-    const refreshExpiresIn = parseInt(this.config.getOrThrow('JWT_REFRESH_EXPIRES_IN'), 10) || 604800;
-
     let accessToken: string;
     let refreshToken: string;
     try {
       [accessToken, refreshToken] = await Promise.all([
-        this.jwtService.signAsync(payload, { expiresIn: accessExpiresIn }),
+        this.jwtService.signAsync(payload, { expiresIn: this.accessExpiresIn }),
         this.jwtService.signAsync(payload, {
-          secret: this.config.getOrThrow('JWT_REFRESH_SECRET'),
-          expiresIn: refreshExpiresIn,
+          secret: this.refreshSecret,
+          expiresIn: this.refreshExpiresIn,
         }),
       ]);
     } catch (err) {
@@ -134,7 +139,7 @@ export class AuthService {
     return {
       accessToken,
       refreshToken,
-      expiresIn: accessExpiresIn,
+      expiresIn: this.accessExpiresIn,
       userId: user.id,
       email: user.email,
     };
