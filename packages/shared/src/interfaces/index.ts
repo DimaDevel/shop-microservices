@@ -23,6 +23,21 @@ export interface ApiError {
   timestamp: string;
 }
 
+// ── Base interfaces ───────────────────────────────────────────
+
+export interface BaseCommand {
+  commandId: string;
+  orderId: string;
+  correlationId: string;
+}
+
+export interface BaseOrderEvent {
+  orderId: string;
+  userId: string;
+  userEmail: string;
+  correlationId: string;
+}
+
 // ── Shared item type used in stock/confirmed events ───────────
 export interface OrderCreatedEventItem {
   productId: string;
@@ -33,91 +48,55 @@ export interface OrderCreatedEventItem {
 
 // ── Commands (orchestrator → service handlers) ────────────────
 
-export interface ReserveStockCommand {
-  commandId: string; // idempotency key — equals saga state ID
-  orderId: string;
-  correlationId: string;
+export interface ReserveStockCommand extends BaseCommand {
+  // commandId is the idempotency key — equals saga state ID
   items: Array<{ productId: string; quantity: number }>;
 }
 
-export interface ReleaseStockCommand {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
+export interface ReleaseStockCommand extends BaseCommand {
   items: Array<{ productId: string; quantity: number }>;
 }
 
-export interface ProcessPaymentCommand {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
+export interface ProcessPaymentCommand extends BaseCommand {
   userId: string;
   amount: number;
 }
 
 // ── Replies (service handlers → orchestrator) ─────────────────
 
-export interface StockReservedEvent {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
+export interface StockReservedEvent extends BaseCommand {
   items: OrderCreatedEventItem[];
   total: number;
 }
 
-export interface StockReservationFailedEvent {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
+export interface StockReservationFailedEvent extends BaseCommand {
   reason: string;
 }
 
-export interface StockReleasedEvent {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
-}
+export interface StockReleasedEvent extends BaseCommand {}
 
-export interface PaymentProcessedEvent {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
+export interface PaymentProcessedEvent extends BaseCommand {
   transactionId: string;
 }
 
-export interface PaymentFailedEvent {
-  commandId: string;
-  orderId: string;
-  correlationId: string;
+export interface PaymentFailedEvent extends BaseCommand {
   reason: string;
 }
 
 // ── Domain events (broadcast to downstream consumers) ─────────
 
-export interface OrderConfirmedEvent {
-  orderId: string;
-  userId: string;
-  userEmail: string;
-  correlationId: string;
+export interface OrderConfirmedEvent extends BaseOrderEvent {
   items: OrderCreatedEventItem[];
   total: number;
   confirmedAt: string;
 }
 
-export interface OrderCancelledEvent {
-  orderId: string;
-  userId: string;
-  userEmail: string;
-  correlationId: string;
+export interface OrderCancelledEvent extends BaseOrderEvent {
   reason: string;
   cancelledAt: string;
 }
 
-export interface PdfGeneratedEvent {
-  orderId: string;
-  userId: string;
-  userEmail: string;
-  correlationId: string;
+export interface PdfGeneratedEvent extends BaseOrderEvent {
   pdfPath: string;
   createdAt: string;
 }

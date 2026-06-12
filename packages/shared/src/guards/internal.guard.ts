@@ -4,6 +4,9 @@ import { Reflector } from '@nestjs/core';
 import { HEADERS } from '../constants';
 import { IS_PUBLIC_KEY } from '../decorators';
 
+// Second line of defense: enforces that only the gateway can reach internal services.
+// Even if the private network boundary is breached, requests without the correct
+// x-internal-secret header are rejected. The gateway is the sole holder of INTERNAL_SECRET.
 @Injectable()
 export class InternalGuard implements CanActivate {
   constructor(
