@@ -3,13 +3,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
-import { KafkaModule } from '@nest-gateway/kafka';
+import { KafkaModule, DbKafkaHealthModule } from '@nest-gateway/kafka';
 import { PaymentsModule } from './payments/payments.module';
 import { PaymentEntity } from './payments/payment.entity';
 import { OutboxEntity } from './payments/outbox.entity';
 import { IdempotencyKeyEntity } from './payments/idempotency.entity';
 import { UserWalletEntity } from './payments/user-wallet.entity';
-import { HealthModule } from './health/health.module';
 import { InternalGuard } from './guards/internal.guard';
 
 @Module({
@@ -38,7 +37,7 @@ import { InternalGuard } from './guards/internal.guard';
       source: 'payment-service',
     }),
     PaymentsModule,
-    HealthModule,
+    DbKafkaHealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: InternalGuard }],
 })

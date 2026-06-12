@@ -12,6 +12,7 @@
   "dependencies": {
     "@keyv/redis": "^5.1.6",
     "@nest-gateway/kafka": "*",
+    "@nest-gateway/outbox": "*",
     "@nest-gateway/shared": "*",
     "@nestjs/cache-manager": "^3.1.2",
     "@nestjs/common": "^11.1.21",

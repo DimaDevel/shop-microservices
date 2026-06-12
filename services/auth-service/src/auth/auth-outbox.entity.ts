@@ -1,10 +1,7 @@
 import { Column, CreateDateColumn, Entity, PrimaryGeneratedColumn } from 'typeorm';
+import { OutboxStatus } from '@nest-gateway/shared';
 
-export enum OutboxStatus {
-  PENDING = 'pending',
-  PUBLISHED = 'published',
-  FAILED = 'failed',
-}
+export { OutboxStatus };
 
 @Entity('auth_outbox')
 export class AuthOutboxEntity {

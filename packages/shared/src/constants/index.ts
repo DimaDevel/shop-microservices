@@ -13,6 +13,12 @@ export enum Role {
   MODERATOR = 'moderator',
 }
 
+export enum OutboxStatus {
+  PENDING = 'pending',
+  PUBLISHED = 'published',
+  FAILED = 'failed',
+}
+
 export const KAFKA_TOPICS = {
   // Commands: orchestrator → service handlers
   RESERVE_STOCK: 'orders.reserve-stock',

@@ -2,9 +2,8 @@ import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
-import { KafkaModule } from '@nest-gateway/kafka';
+import { KafkaModule, DbHealthModule } from '@nest-gateway/kafka';
 import { UsersModule } from './users/users.module';
-import { HealthModule } from './health/health.module';
 import { ProfileEntity } from './users/profile.entity';
 import { InternalGuard } from './guards/internal.guard';
 
@@ -32,7 +31,7 @@ import { InternalGuard } from './guards/internal.guard';
       source: 'user-service',
     }),
     UsersModule,
-    HealthModule,
+    DbHealthModule,
   ],
   providers: [
     {

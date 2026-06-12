@@ -3,13 +3,12 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
-import { KafkaModule } from '@nest-gateway/kafka';
+import { KafkaModule, DbKafkaHealthModule } from '@nest-gateway/kafka';
 import { OrdersModule } from './orders/orders.module';
 import { OrderOrmEntity } from './orders/infrastructure/persistence/order.orm-entity';
 import { OrderItemOrmEntity } from './orders/infrastructure/persistence/order-item.orm-entity';
 import { OutboxOrmEntity } from './orders/infrastructure/persistence/outbox.orm-entity';
 import { SagaStateOrmEntity } from './orders/infrastructure/persistence/saga-state.orm-entity';
-import { HealthModule } from './health/health.module';
 import { InternalGuard } from './guards/internal.guard';
 
 @Module({
@@ -38,7 +37,7 @@ import { InternalGuard } from './guards/internal.guard';
       source: 'order-service',
     }),
     OrdersModule,
-    HealthModule,
+    DbKafkaHealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: InternalGuard }],
 })

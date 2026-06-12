@@ -12,6 +12,7 @@
   },
   "dependencies": {
     "@nest-gateway/kafka": "*",
+    "@nest-gateway/outbox": "*",
     "@nest-gateway/shared": "*",
     "@nestjs/common": "^11.1.21",
     "@nestjs/config": "^4.0.4",

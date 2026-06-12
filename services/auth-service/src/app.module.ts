@@ -3,9 +3,8 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ScheduleModule } from '@nestjs/schedule';
 import { APP_GUARD } from '@nestjs/core';
-import { KafkaModule } from '@nest-gateway/kafka';
+import { KafkaModule, DbHealthModule } from '@nest-gateway/kafka';
 import { AuthModule } from './auth/auth.module';
-import { HealthModule } from './health/health.module';
 import { UserEntity } from './users/user.entity';
 import { AuthOutboxEntity } from './auth/auth-outbox.entity';
 import { InternalGuard } from './guards/internal.guard';
@@ -36,7 +35,7 @@ import { InternalGuard } from './guards/internal.guard';
       source: 'auth-service',
     }),
     AuthModule,
-    HealthModule,
+    DbHealthModule,
   ],
   providers: [
     {

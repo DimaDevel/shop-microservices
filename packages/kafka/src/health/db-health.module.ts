@@ -4,7 +4,7 @@ import { HealthCheck, HealthCheckService, TerminusModule, TypeOrmHealthIndicator
 import { Public } from '@nest-gateway/shared';
 
 @Controller('health')
-export class HealthController {
+export class DbHealthController {
   constructor(
     private readonly health: HealthCheckService,
     private readonly db: TypeOrmHealthIndicator,
@@ -20,6 +20,6 @@ export class HealthController {
 
 @Module({
   imports: [TerminusModule],
-  controllers: [HealthController],
+  controllers: [DbHealthController],
 })
-export class HealthModule {}
+export class DbHealthModule {}

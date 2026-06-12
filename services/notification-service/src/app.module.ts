@@ -1,9 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { KafkaModule } from '@nest-gateway/kafka';
+import { KafkaModule, DbKafkaHealthModule } from '@nest-gateway/kafka';
 import { NotificationModule } from './notification/notification.module';
-import { HealthModule } from './health/health.module';
 import { NotificationLogEntity } from './notification/notification-log.entity';
 
 @Module({
@@ -29,7 +28,7 @@ import { NotificationLogEntity } from './notification/notification-log.entity';
       source: 'notification-service',
     }),
     NotificationModule,
-    HealthModule,
+    DbKafkaHealthModule,
   ],
 })
 export class AppModule {}

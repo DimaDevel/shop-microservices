@@ -6,12 +6,11 @@ import { APP_GUARD } from '@nestjs/core';
 import { CacheModule } from '@nestjs/cache-manager';
 import KeyvRedis from '@keyv/redis';
 import Keyv from 'keyv';
-import { KafkaModule } from '@nest-gateway/kafka';
+import { KafkaModule, DbKafkaHealthModule } from '@nest-gateway/kafka';
 import { ProductsModule } from './products/products.module';
 import { ProductEntity } from './products/product.entity';
 import { OutboxEntity } from './products/outbox.entity';
 import { IdempotencyKeyEntity } from './products/idempotency.entity';
-import { HealthModule } from './health/health.module';
 import { InternalGuard } from './guards/internal.guard';
 
 @Module({
@@ -53,7 +52,7 @@ import { InternalGuard } from './guards/internal.guard';
       source: 'product-service',
     }),
     ProductsModule,
-    HealthModule,
+    DbKafkaHealthModule,
   ],
   providers: [{ provide: APP_GUARD, useClass: InternalGuard }],
 })
