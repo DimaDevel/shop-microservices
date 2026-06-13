@@ -30,7 +30,7 @@ export class OutboxProcessorService {
 
         for (const record of records) {
           try {
-            const correlationId = (record.payload as Record<string, unknown>)?.correlationId as string ?? '';
+            const correlationId = ((record.payload as Record<string, unknown>)?.correlationId as string) ?? '';
             await this.kafkaProducer.publish(record.topic, record.payload, {
               correlationId,
               messageId: record.id,

@@ -51,7 +51,7 @@ describe('WalletEventsConsumer', () => {
   it('creates a wallet inside a transaction when a user registers', async () => {
     await handlers.get(KAFKA_TOPICS.USER_REGISTERED)!({
       payload: { userId: 'user-1', email: 'user@example.com' },
-    });
+    } as KafkaEnvelope<unknown>);
 
     expect(dataSource.transaction).toHaveBeenCalledTimes(1);
     expect(walletService.findOrCreate).toHaveBeenCalledWith('user-1', expect.any(Number), {});
@@ -60,7 +60,7 @@ describe('WalletEventsConsumer', () => {
   it('seeds the wallet with WALLET_INITIAL_BALANCE default of 10 000', async () => {
     await handlers.get(KAFKA_TOPICS.USER_REGISTERED)!({
       payload: { userId: 'user-2', email: 'u@example.com' },
-    });
+    } as KafkaEnvelope<unknown>);
 
     expect(walletService.findOrCreate).toHaveBeenCalledWith('user-2', 10_000, expect.anything());
   });
@@ -84,7 +84,7 @@ describe('WalletEventsConsumer', () => {
 
     await handlers.get(KAFKA_TOPICS.USER_REGISTERED)!({
       payload: { userId: 'user-3', email: 'u@example.com' },
-    });
+    } as KafkaEnvelope<unknown>);
 
     expect(walletService.findOrCreate).toHaveBeenCalledWith('user-3', 500, expect.anything());
   });

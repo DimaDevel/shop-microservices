@@ -56,7 +56,8 @@ describe('PaymentsSagaController', () => {
 
   afterEach(() => jest.clearAllMocks());
 
-  const dispatch = (payload = command) => handlers.get(KAFKA_TOPICS.PROCESS_PAYMENT)!({ payload });
+  const dispatch = (payload = command) =>
+    handlers.get(KAFKA_TOPICS.PROCESS_PAYMENT)!({ payload } as KafkaEnvelope<unknown>);
 
   describe('happy path', () => {
     it('writes PAYMENT_PROCESSED to outbox when payment succeeds', async () => {

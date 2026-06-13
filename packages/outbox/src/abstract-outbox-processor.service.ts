@@ -13,7 +13,7 @@ export interface OutboxRecord extends ObjectLiteral {
   topic: string;
   messageKey: string;
   payload: object;
-  publishedAt?: Date;
+  publishedAt?: Date | null;
   lastError?: string | null;
 }
 
@@ -52,7 +52,7 @@ export abstract class AbstractOutboxProcessorService<T extends OutboxRecord> {
 
         for (const record of records) {
           try {
-            const correlationId = (record.payload as Record<string, unknown>)?.correlationId as string ?? '';
+            const correlationId = ((record.payload as Record<string, unknown>)?.correlationId as string) ?? '';
             await this.kafkaProducer.publish(record.topic, record.payload, {
               correlationId,
               // messageId ties this Kafka message to the outbox row; saga participants

@@ -112,7 +112,9 @@ describe('WalletService', () => {
       const manager = makeManager();
       manager._qb.getOne.mockResolvedValue(makeWallet(50));
 
-      await expect(service.deduct('user-1', 100, manager as unknown as EntityManager)).rejects.toThrow(InsufficientFundsError);
+      await expect(service.deduct('user-1', 100, manager as unknown as EntityManager)).rejects.toThrow(
+        InsufficientFundsError,
+      );
       expect(manager._repo.save).not.toHaveBeenCalled();
     });
 
@@ -120,7 +122,9 @@ describe('WalletService', () => {
       const manager = makeManager();
       manager._qb.getOne.mockResolvedValue(null);
 
-      await expect(service.deduct('user-1', 100, manager as unknown as EntityManager)).rejects.toThrow(InsufficientFundsError);
+      await expect(service.deduct('user-1', 100, manager as unknown as EntityManager)).rejects.toThrow(
+        InsufficientFundsError,
+      );
     });
   });
 

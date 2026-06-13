@@ -44,7 +44,7 @@ describe('SagaReplyController', () => {
     controller.onModuleInit();
   });
 
-  const envelope = (payload: object) => ({ correlationId: 'corr-1', payload });
+  const envelope = (payload: object) => ({ correlationId: 'corr-1', payload }) as KafkaEnvelope<unknown>;
 
   describe('routing', () => {
     it('routes STOCK_RESERVED to onStockReserved', async () => {

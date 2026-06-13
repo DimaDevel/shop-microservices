@@ -63,9 +63,9 @@ describe('OrdersController', () => {
     });
 
     it('throws UnauthorizedException when userId header is missing', async () => {
-      await expect(controller.create({ items: [] } as CreateOrderDto, '', 'user@example.com', 'corr-1')).rejects.toThrow(
-        UnauthorizedException,
-      );
+      await expect(
+        controller.create({ items: [] } as CreateOrderDto, '', 'user@example.com', 'corr-1'),
+      ).rejects.toThrow(UnauthorizedException);
     });
   });
 

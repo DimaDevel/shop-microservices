@@ -37,6 +37,8 @@ describe('AuthOutboxService', () => {
   it('propagates save errors', async () => {
     mockRepo.save.mockRejectedValue(new Error('db write failed'));
 
-    await expect(service.write(mockManager as unknown as EntityManager, 'agg-1', 'topic', 'key', {})).rejects.toThrow('db write failed');
+    await expect(service.write(mockManager as unknown as EntityManager, 'agg-1', 'topic', 'key', {})).rejects.toThrow(
+      'db write failed',
+    );
   });
 });
