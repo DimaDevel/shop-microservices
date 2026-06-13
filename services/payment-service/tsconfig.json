@@ -25,6 +25,10 @@
       "@nest-gateway/kafka": [
         "../../packages/kafka/dist",
         "../../packages/kafka/src"
+      ],
+      "@nest-gateway/outbox": [
+        "../../packages/outbox/dist",
+        "../../packages/outbox/src"
       ]
     }
   },
