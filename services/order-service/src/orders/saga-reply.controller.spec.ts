@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { KafkaConsumerService } from '@nest-gateway/kafka';
+import { KafkaConsumerService, KafkaEnvelope } from '@nest-gateway/kafka';
 import { SagaReplyController } from './saga-reply.controller';
 import { SagaOrchestrator } from './application/services/saga-orchestrator.service';
 import { OrderNotFoundError } from './domain/errors/orders.errors';
@@ -15,7 +15,7 @@ describe('SagaReplyController', () => {
     onStockReleased: jest.Mock;
   };
   let kafkaConsumer: { subscribe: jest.Mock };
-  const handlers = new Map<string, (e: any) => Promise<void>>();
+  const handlers = new Map<string, (e: KafkaEnvelope<unknown>) => Promise<void>>();
 
   beforeEach(async () => {
     handlers.clear();

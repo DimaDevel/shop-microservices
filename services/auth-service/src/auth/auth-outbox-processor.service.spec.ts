@@ -44,10 +44,10 @@ describe('AuthOutboxProcessorService', () => {
   beforeEach(async () => {
     manager = makeManager();
 
-    kafkaProducer = { publish: jest.fn().mockResolvedValue(undefined) } as any;
+    kafkaProducer = { publish: jest.fn().mockResolvedValue(undefined) } as unknown as jest.Mocked<KafkaProducerService>;
     dataSource = {
       transaction: jest.fn().mockImplementation(async (cb: (m: typeof manager) => Promise<void>) => cb(manager)),
-    } as any;
+    } as unknown as jest.Mocked<DataSource>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

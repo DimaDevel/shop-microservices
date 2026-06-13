@@ -1,3 +1,4 @@
+import { EntityManager } from 'typeorm';
 import { WalletService } from './wallet.service';
 import { UserWalletEntity } from './user-wallet.entity';
 import { InsufficientFundsError } from './payments.errors';
@@ -39,7 +40,7 @@ describe('WalletService', () => {
       const existing = makeWallet(500);
       manager._repo.findOne.mockResolvedValue(existing);
 
-      const result = await service.findOrCreate('user-1', 10_000, manager as any);
+      const result = await service.findOrCreate('user-1', 10_000, manager as unknown as EntityManager);
 
       expect(result).toBe(existing);
       expect(manager._repo.save).not.toHaveBeenCalled();
@@ -51,7 +52,7 @@ describe('WalletService', () => {
       manager._repo.findOne.mockResolvedValue(null);
       manager._repo.save.mockResolvedValue(created);
 
-      const result = await service.findOrCreate('user-1', 10_000, manager as any);
+      const result = await service.findOrCreate('user-1', 10_000, manager as unknown as EntityManager);
 
       expect(manager._repo.create).toHaveBeenCalledWith({ userId: 'user-1', balance: 10_000 });
       expect(manager._repo.save).toHaveBeenCalledTimes(1);
@@ -65,7 +66,7 @@ describe('WalletService', () => {
       const wallet = makeWallet(300);
       manager._repo.findOne.mockResolvedValue(wallet);
 
-      const result = await service.getBalance('user-1', manager as any);
+      const result = await service.getBalance('user-1', manager as unknown as EntityManager);
 
       expect(result).toBe(wallet);
     });
@@ -76,7 +77,7 @@ describe('WalletService', () => {
       manager._repo.findOne.mockResolvedValue(null);
       manager._repo.save.mockResolvedValue(zeroed);
 
-      const result = await service.getBalance('user-1', manager as any);
+      const result = await service.getBalance('user-1', manager as unknown as EntityManager);
 
       expect(manager._repo.create).toHaveBeenCalledWith({ userId: 'user-1', balance: 0 });
       expect(result).toBe(zeroed);
@@ -90,7 +91,7 @@ describe('WalletService', () => {
       manager._qb.getOne.mockResolvedValue(wallet);
       manager._repo.save.mockResolvedValue({ ...wallet, balance: 900 });
 
-      await service.deduct('user-1', 100, manager as any);
+      await service.deduct('user-1', 100, manager as unknown as EntityManager);
 
       expect(manager._repo.createQueryBuilder).toHaveBeenCalledWith('w');
       expect(manager._qb.setLock).toHaveBeenCalledWith('pessimistic_write');
@@ -102,7 +103,7 @@ describe('WalletService', () => {
       manager._qb.getOne.mockResolvedValue(makeWallet(1_000));
       manager._repo.save.mockResolvedValue(makeWallet(900));
 
-      await service.deduct('user-1', 100, manager as any);
+      await service.deduct('user-1', 100, manager as unknown as EntityManager);
 
       expect(manager._repo.save).toHaveBeenCalledWith(expect.objectContaining({ balance: 900 }));
     });
@@ -111,7 +112,7 @@ describe('WalletService', () => {
       const manager = makeManager();
       manager._qb.getOne.mockResolvedValue(makeWallet(50));
 
-      await expect(service.deduct('user-1', 100, manager as any)).rejects.toThrow(InsufficientFundsError);
+      await expect(service.deduct('user-1', 100, manager as unknown as EntityManager)).rejects.toThrow(InsufficientFundsError);
       expect(manager._repo.save).not.toHaveBeenCalled();
     });
 
@@ -119,7 +120,7 @@ describe('WalletService', () => {
       const manager = makeManager();
       manager._qb.getOne.mockResolvedValue(null);
 
-      await expect(service.deduct('user-1', 100, manager as any)).rejects.toThrow(InsufficientFundsError);
+      await expect(service.deduct('user-1', 100, manager as unknown as EntityManager)).rejects.toThrow(InsufficientFundsError);
     });
   });
 
@@ -129,7 +130,7 @@ describe('WalletService', () => {
       manager._qb.getOne.mockResolvedValue(makeWallet(500));
       manager._repo.save.mockResolvedValue(makeWallet(600));
 
-      await service.topUp('user-1', 100, manager as any);
+      await service.topUp('user-1', 100, manager as unknown as EntityManager);
 
       expect(manager._repo.save).toHaveBeenCalledWith(expect.objectContaining({ balance: 600 }));
     });
@@ -140,7 +141,7 @@ describe('WalletService', () => {
       manager._qb.getOne.mockResolvedValue(null);
       manager._repo.save.mockResolvedValue(created);
 
-      const result = await service.topUp('user-1', 200, manager as any);
+      const result = await service.topUp('user-1', 200, manager as unknown as EntityManager);
 
       expect(manager._repo.create).toHaveBeenCalledWith({ userId: 'user-1', balance: 200 });
       expect(result).toBe(created);

@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { DynamicModule, ValidationPipe } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { APP_GUARD } from '@nestjs/core';
@@ -43,7 +43,7 @@ describe('Users (e2e)', () => {
         ConfigModule.forRoot({
           isGlobal: true,
           load: [() => ({ INTERNAL_SECRET })],
-        }) as any,
+        }) as unknown as DynamicModule,
       ],
       controllers: [UsersController],
       providers: [

@@ -6,6 +6,7 @@ import { GetOrderUseCase } from './application/use-cases/get-order.use-case';
 import { GetUserOrdersUseCase } from './application/use-cases/get-user-orders.use-case';
 import { OrderNotFoundError } from './domain/errors/orders.errors';
 import { OrderStatus } from './domain/entities/order';
+import { CreateOrderDto, PaginationQueryDto } from './orders.dto';
 
 const makeResult = (id = 'order-1') => ({
   id,
@@ -46,7 +47,7 @@ describe('OrdersController', () => {
       createUseCase.execute.mockResolvedValue(makeResult());
 
       const result = await controller.create(
-        { items: [{ productId: 'prod-1', quantity: 2 }] } as any,
+        { items: [{ productId: 'prod-1', quantity: 2 }] } as CreateOrderDto,
         'user-1',
         'user@example.com',
         'corr-1',
@@ -62,7 +63,7 @@ describe('OrdersController', () => {
     });
 
     it('throws UnauthorizedException when userId header is missing', async () => {
-      await expect(controller.create({ items: [] } as any, '', 'user@example.com', 'corr-1')).rejects.toThrow(
+      await expect(controller.create({ items: [] } as CreateOrderDto, '', 'user@example.com', 'corr-1')).rejects.toThrow(
         UnauthorizedException,
       );
     });
@@ -76,14 +77,14 @@ describe('OrdersController', () => {
       };
       getUserUseCase.execute.mockResolvedValue(paginated);
 
-      const result = await controller.findAll({ page: 1, limit: 20 } as any, 'user-1');
+      const result = await controller.findAll({ page: 1, limit: 20 } as PaginationQueryDto, 'user-1');
 
       expect(getUserUseCase.execute).toHaveBeenCalledWith('user-1', 1, 20);
       expect(result).toBe(paginated);
     });
 
     it('throws UnauthorizedException when userId header is missing', () => {
-      expect(() => controller.findAll({ page: 1, limit: 20 } as any, '')).toThrow(UnauthorizedException);
+      expect(() => controller.findAll({ page: 1, limit: 20 } as PaginationQueryDto, '')).toThrow(UnauthorizedException);
     });
   });
 

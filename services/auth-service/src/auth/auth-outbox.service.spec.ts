@@ -1,3 +1,4 @@
+import { EntityManager } from 'typeorm';
 import { AuthOutboxService } from './auth-outbox.service';
 import { AuthOutboxEntity } from './auth-outbox.entity';
 
@@ -18,7 +19,7 @@ describe('AuthOutboxService', () => {
   });
 
   it('creates and saves an outbox record via the manager', async () => {
-    await service.write(mockManager as any, 'agg-1', 'users.user-registered', 'agg-1', {
+    await service.write(mockManager as unknown as EntityManager, 'agg-1', 'users.user-registered', 'agg-1', {
       userId: 'u1',
       email: 'u@test.com',
     });
@@ -36,6 +37,6 @@ describe('AuthOutboxService', () => {
   it('propagates save errors', async () => {
     mockRepo.save.mockRejectedValue(new Error('db write failed'));
 
-    await expect(service.write(mockManager as any, 'agg-1', 'topic', 'key', {})).rejects.toThrow('db write failed');
+    await expect(service.write(mockManager as unknown as EntityManager, 'agg-1', 'topic', 'key', {})).rejects.toThrow('db write failed');
   });
 });

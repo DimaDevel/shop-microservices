@@ -97,6 +97,7 @@ describe('OutboxProcessorService', () => {
   });
 
   it('skips the run when already processing', async () => {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (service as any).isProcessing = true;
 
     await service.processPending();
@@ -106,11 +107,13 @@ describe('OutboxProcessorService', () => {
 
   it('logs the error and resets isProcessing when transaction itself fails', async () => {
     dataSource.transaction.mockRejectedValue(new Error('db error'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const loggerSpy = jest.spyOn((service as any).logger, 'error').mockImplementation(() => {});
 
     await expect(service.processPending()).resolves.toBeUndefined();
 
     expect(loggerSpy).toHaveBeenCalledWith(expect.stringContaining('db error'));
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     expect((service as any).isProcessing).toBe(false);
   });
 });

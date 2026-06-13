@@ -1,7 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { ConfigService } from '@nestjs/config';
 import { DataSource } from 'typeorm';
-import { KafkaConsumerService } from '@nest-gateway/kafka';
+import { KafkaConsumerService, KafkaEnvelope } from '@nest-gateway/kafka';
 import { KAFKA_TOPICS } from '@nest-gateway/shared';
 import { WalletEventsConsumer } from './wallet-events.consumer';
 import { WalletService } from './wallet.service';
@@ -11,7 +11,7 @@ describe('WalletEventsConsumer', () => {
   let walletService: { findOrCreate: jest.Mock };
   let dataSource: { transaction: jest.Mock };
   let kafkaConsumer: { subscribe: jest.Mock };
-  const handlers = new Map<string, (e: any) => Promise<void>>();
+  const handlers = new Map<string, (e: KafkaEnvelope<unknown>) => Promise<void>>();
 
   beforeEach(async () => {
     handlers.clear();

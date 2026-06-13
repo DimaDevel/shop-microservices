@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { FastifyAdapter, NestFastifyApplication } from '@nestjs/platform-fastify';
-import { ValidationPipe } from '@nestjs/common';
+import { DynamicModule, ValidationPipe } from '@nestjs/common';
 import { JwtModule } from '@nestjs/jwt';
 import { ConfigModule } from '@nestjs/config';
 import { getRepositoryToken } from '@nestjs/typeorm';
@@ -66,8 +66,8 @@ describe('Auth (e2e)', () => {
               INTERNAL_SECRET,
             }),
           ],
-        }) as any,
-        JwtModule.register({ secret: JWT_SECRET, signOptions: { expiresIn: 3600 } }) as any,
+        }) as unknown as DynamicModule,
+        JwtModule.register({ secret: JWT_SECRET, signOptions: { expiresIn: 3600 } }) as unknown as DynamicModule,
       ],
       controllers: [AuthController],
       providers: [

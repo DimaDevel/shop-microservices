@@ -40,7 +40,7 @@ export class HealthController {
 
   private checkCircuitBreakers(): HealthIndicatorResult {
     const breakers = this.proxy.getBreakersStatus();
-    const anyOpen = Object.values(breakers).some((s: any) => s.state === 'open');
+    const anyOpen = Object.values(breakers).some((s) => (s as { state: string }).state === 'open');
     const result: HealthIndicatorResult = {
       circuit_breakers: { status: anyOpen ? 'down' : 'up', ...breakers },
     };

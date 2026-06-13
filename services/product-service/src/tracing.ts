@@ -13,4 +13,5 @@ const sdk = new NodeSDK({
 });
 
 sdk.start();
+// eslint-disable-next-line no-console
 process.on('SIGTERM', () => sdk.shutdown().catch(console.error));

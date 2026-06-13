@@ -1,3 +1,4 @@
+import { EntityManager } from 'typeorm';
 import { TypeOrmOutboxRepository } from './typeorm-outbox.repository';
 import { OutboxStatus } from './outbox.orm-entity';
 
@@ -50,7 +51,7 @@ describe('TypeOrmOutboxRepository', () => {
     it('creates and saves an outbox entity via the manager', async () => {
       manager._repo.save.mockResolvedValue({});
 
-      await repo.write('agg-1', 'topic-a', 'key-1', { data: 1 }, manager as any);
+      await repo.write('agg-1', 'topic-a', 'key-1', { data: 1 }, manager as unknown as EntityManager);
 
       expect(manager.getRepository).toHaveBeenCalled();
       expect(manager._repo.create).toHaveBeenCalledWith({
@@ -69,7 +70,7 @@ describe('TypeOrmOutboxRepository', () => {
         { id: 'r-1', topic: 'topic-a', messageKey: 'key-1', payload: {}, retryCount: 0 },
       ]);
 
-      const records = await repo.findPendingWithLock(10, manager as any);
+      const records = await repo.findPendingWithLock(10, manager as unknown as EntityManager);
 
       expect(manager.createQueryBuilder).toHaveBeenCalled();
       expect(manager._qb.setLock).toHaveBeenCalledWith('pessimistic_partial_write');
@@ -83,7 +84,7 @@ describe('TypeOrmOutboxRepository', () => {
     it('sets status to PUBLISHED and publishedAt', async () => {
       manager._repo.update.mockResolvedValue({});
 
-      await repo.markPublished('rec-1', manager as any);
+      await repo.markPublished('rec-1', manager as unknown as EntityManager);
 
       expect(manager._repo.update).toHaveBeenCalledWith(
         'rec-1',
@@ -100,7 +101,7 @@ describe('TypeOrmOutboxRepository', () => {
       manager._repo.update.mockResolvedValue({});
       const scheduled = new Date(Date.now() + 2000);
 
-      await repo.scheduleRetry('rec-1', 2, 'timeout', scheduled, manager as any);
+      await repo.scheduleRetry('rec-1', 2, 'timeout', scheduled, manager as unknown as EntityManager);
 
       expect(manager._repo.update).toHaveBeenCalledWith('rec-1', {
         status: OutboxStatus.PENDING,
@@ -115,7 +116,7 @@ describe('TypeOrmOutboxRepository', () => {
     it('sets status to FAILED with retryCount and error', async () => {
       manager._repo.update.mockResolvedValue({});
 
-      await repo.permanentlyFail('rec-1', 5, 'kafka unreachable', manager as any);
+      await repo.permanentlyFail('rec-1', 5, 'kafka unreachable', manager as unknown as EntityManager);
 
       expect(manager._repo.update).toHaveBeenCalledWith('rec-1', {
         status: OutboxStatus.FAILED,

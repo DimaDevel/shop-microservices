@@ -37,11 +37,11 @@ describe('UserEventsConsumer', () => {
       subscribe: jest.fn().mockImplementation(({ handler }) => {
         capturedHandler = handler;
       }),
-    } as any;
+    } as unknown as jest.Mocked<KafkaConsumerService>;
 
     usersService = {
       createProfile: jest.fn(),
-    } as any;
+    } as unknown as jest.Mocked<UsersService>;
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [

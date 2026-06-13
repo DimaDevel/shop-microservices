@@ -1,6 +1,6 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import { KafkaConsumerService } from '@nest-gateway/kafka';
+import { KafkaConsumerService, KafkaEnvelope } from '@nest-gateway/kafka';
 import { KAFKA_TOPICS } from '@nest-gateway/shared';
 import { PaymentsSagaController } from './payments-saga.controller';
 import { PaymentsService } from './payments.service';
@@ -16,7 +16,7 @@ describe('PaymentsSagaController', () => {
   let dataSource: { transaction: jest.Mock };
   let kafkaConsumer: { subscribe: jest.Mock };
 
-  const handlers = new Map<string, (e: any) => Promise<void>>();
+  const handlers = new Map<string, (e: KafkaEnvelope<unknown>) => Promise<void>>();
   const fakeManager = {};
 
   const command = {
