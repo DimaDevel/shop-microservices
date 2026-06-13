@@ -73,7 +73,7 @@ export interface StockReservationFailedEvent extends BaseCommand {
   reason: string;
 }
 
-export interface StockReleasedEvent extends BaseCommand {}
+export type StockReleasedEvent = BaseCommand;
 
 export interface PaymentProcessedEvent extends BaseCommand {
   transactionId: string;
