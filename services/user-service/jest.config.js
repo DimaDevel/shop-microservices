@@ -11,5 +11,6 @@ module.exports = {
   modulePaths: ['<rootDir>/../node_modules'],
   moduleNameMapper: {
     '^@nest-gateway/shared$': '<rootDir>/../../../packages/shared/src',
+    '^@nest-gateway/kafka$': '<rootDir>/../../../packages/kafka/src',
   },
 };
