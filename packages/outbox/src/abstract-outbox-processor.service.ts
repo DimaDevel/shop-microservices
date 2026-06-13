@@ -62,7 +62,8 @@ export abstract class AbstractOutboxProcessorService<T extends OutboxRecord> {
             await manager.getRepository(this.getEntityClass()).update(record.id, {
               status: OutboxStatus.PUBLISHED,
               publishedAt: new Date(),
-            });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
           } catch (e) {
             const retryCount = record.retryCount + 1;
             // Exponential back-off capped at 5 minutes.
@@ -72,7 +73,8 @@ export abstract class AbstractOutboxProcessorService<T extends OutboxRecord> {
               retryCount,
               lastError: (e as Error).message,
               scheduledAt: new Date(Date.now() + delayMs),
-            });
+              // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            } as any);
             this.logger.warn(`Outbox ${record.id} failed (attempt ${retryCount}): ${(e as Error).message}`);
           }
         }
