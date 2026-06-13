@@ -4,6 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 COPY packages/shared/package.json ./packages/shared/
 COPY packages/kafka/package.json ./packages/kafka/
+COPY packages/outbox/package.json ./packages/outbox/
 COPY services/gateway/package.json ./services/gateway/
 COPY services/auth-service/package.json ./services/auth-service/
 COPY services/user-service/package.json ./services/user-service/
@@ -17,6 +18,8 @@ COPY packages/shared ./packages/shared
 RUN cd packages/shared && npx tsc
 COPY packages/kafka ./packages/kafka
 RUN cd packages/kafka && npx tsc
+COPY packages/outbox ./packages/outbox
+RUN cd packages/outbox && npx tsc
 COPY services/payment-service/src ./services/payment-service/src
 COPY services/payment-service/tsconfig.json ./services/payment-service/
 RUN cd services/payment-service && npx nest build
@@ -29,5 +32,7 @@ COPY --from=builder /app/packages/shared/dist ./packages/shared/dist
 COPY packages/shared/package.json ./packages/shared/
 COPY --from=builder /app/packages/kafka/dist ./packages/kafka/dist
 COPY packages/kafka/package.json ./packages/kafka/
+COPY --from=builder /app/packages/outbox/dist ./packages/outbox/dist
+COPY packages/outbox/package.json ./packages/outbox/
 EXPOSE 3007
 CMD ["node", "dist/main"]
