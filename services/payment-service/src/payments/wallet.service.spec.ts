@@ -71,16 +71,14 @@ describe('WalletService', () => {
       expect(result).toBe(wallet);
     });
 
-    it('creates a zero-balance wallet when none exists', async () => {
+    it('returns null when wallet does not exist', async () => {
       const manager = makeManager();
-      const zeroed = makeWallet(0);
       manager._repo.findOne.mockResolvedValue(null);
-      manager._repo.save.mockResolvedValue(zeroed);
 
       const result = await service.getBalance('user-1', manager as unknown as EntityManager);
 
-      expect(manager._repo.create).toHaveBeenCalledWith({ userId: 'user-1', balance: 0 });
-      expect(result).toBe(zeroed);
+      expect(result).toBeNull();
+      expect(manager._repo.save).not.toHaveBeenCalled();
     });
   });
 

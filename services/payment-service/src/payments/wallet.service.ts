@@ -12,13 +12,8 @@ export class WalletService {
     return repo.save(repo.create({ userId, balance: initialBalance }));
   }
 
-  async getBalance(userId: string, manager: EntityManager): Promise<UserWalletEntity> {
-    const repo = manager.getRepository(UserWalletEntity);
-    const wallet = await repo.findOne({ where: { userId } });
-    if (!wallet) {
-      return repo.save(repo.create({ userId, balance: 0 }));
-    }
-    return wallet;
+  async getBalance(userId: string, manager: EntityManager): Promise<UserWalletEntity | null> {
+    return manager.getRepository(UserWalletEntity).findOne({ where: { userId } });
   }
 
   async deduct(userId: string, amount: number, manager: EntityManager): Promise<UserWalletEntity> {

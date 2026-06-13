@@ -1,4 +1,4 @@
-import { Body, Controller, ForbiddenException, Get, Param, Post } from '@nestjs/common';
+import { Body, Controller, ForbiddenException, Get, NotFoundException, Param, Post } from '@nestjs/common';
 import { Headers } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { HEADERS, Role } from '@nest-gateway/shared';
@@ -23,6 +23,7 @@ export class WalletsController {
       throw new ForbiddenException('Access denied');
     }
     const wallet = await this.dataSource.transaction((manager) => this.walletService.getBalance(userId, manager));
+    if (!wallet) throw new NotFoundException('Wallet not found');
     return { userId: wallet.userId, balance: Number(wallet.balance) };
   }
 

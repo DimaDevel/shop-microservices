@@ -1,5 +1,5 @@
 import { Test, TestingModule } from '@nestjs/testing';
-import { ForbiddenException } from '@nestjs/common';
+import { ForbiddenException, NotFoundException } from '@nestjs/common';
 import { DataSource } from 'typeorm';
 import { WalletsController } from './wallets.controller';
 import { WalletService } from './wallet.service';
@@ -47,6 +47,12 @@ describe('WalletsController', () => {
       const result = await controller.getWallet('user-2', 'admin-1', 'admin');
 
       expect(result).toEqual({ userId: 'user-2', balance: 3_000 });
+    });
+
+    it('throws NotFoundException when wallet has not been seeded yet', async () => {
+      walletService.getBalance.mockResolvedValue(null);
+
+      await expect(controller.getWallet('user-1', 'user-1', 'user')).rejects.toThrow(NotFoundException);
     });
 
     it('throws ForbiddenException when a non-admin requests another user wallet', async () => {
