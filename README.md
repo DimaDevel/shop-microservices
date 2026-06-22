@@ -201,6 +201,31 @@ k6 run --env API_URL=http://localhost:3000 load-tests/k6/soak.js
 
 > **Note:** `scenarios/orders.js` polls until the saga completes (`pending` → `confirmed` or `cancelled`). It requires at least one product in the database — create one via `POST /products` with an admin token before running this scenario.
 
+### Profiling the gateway with clinic.js
+
+`load-tests/k6/run-stress-with-clinic.sh` runs the stress scenario above while [clinic.js](https://clinicjs.org) profiles the gateway process, producing an HTML report (CPU/event-loop/GC over time) you can correlate with the load stages.
+
+The gateway has to run on the host (not in its container) so clinic can instrument it directly. `docker-compose.profile.yml` exposes the downstream services on `localhost` for that purpose:
+
+```bash
+# 1. bring up the backing services only (no gateway, no nginx)
+docker compose -f docker-compose.yml -f docker-compose.profile.yml up --build -d \
+  auth-service user-service product-service order-service payment-service redis
+
+# 2. build packages/shared before the gateway — the gateway's tsconfig path
+#    mapping resolves to packages/shared/src (and a different dist layout)
+#    if packages/shared/dist doesn't exist yet
+npm run build --prefix packages/shared
+npm run build --prefix services/gateway
+
+# 3. run the stress test under clinic (doctor | flame | bubbleprof)
+export PATH="$HOME/.local/bin:$PATH"   # wherever k6 is installed
+set -a && source .env && set +a
+./load-tests/k6/run-stress-with-clinic.sh doctor
+```
+
+Takes ~8 minutes (the full stress ramp). The report lands at `services/gateway/.clinic/<pid>.clinic-doctor.html`.
+
 ---
 
 ## Swagger UI

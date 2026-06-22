@@ -51,3 +51,9 @@ kafka-data/
 
 # ── npm config (may contain auth tokens) ─────────────────────────────────────
 .npmrc
+
+# ── clinic.js profiling output ────────────────────────────────────────────────
+.clinic/
+*.clinic-doctor.html
+*.clinic-flame.html
+*.clinic-bubbleprof.html

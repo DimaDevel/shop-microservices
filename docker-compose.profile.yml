@@ -1,0 +1,23 @@
+# Overlay for clinic.js profiling: exposes downstream services on localhost
+# so the gateway can run on the host (under clinic) instead of in a container.
+#
+# Usage:
+#   docker compose -f docker-compose.yml -f docker-compose.profile.yml up --build \
+#     auth-service user-service product-service order-service payment-service redis
+#   ./load-tests/k6/run-stress-with-clinic.sh
+services:
+  auth-service:
+    ports:
+      - "127.0.0.1:3001:3001"
+  user-service:
+    ports:
+      - "127.0.0.1:3002:3002"
+  product-service:
+    ports:
+      - "127.0.0.1:3003:3003"
+  order-service:
+    ports:
+      - "127.0.0.1:3004:3004"
+  payment-service:
+    ports:
+      - "127.0.0.1:3007:3007"
