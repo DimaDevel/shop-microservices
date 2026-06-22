@@ -34,11 +34,14 @@ export class SagaOrchestrator {
 
   async onStockReserved(event: StockReservedEvent): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);
-      if (!saga?.canHandle(SagaStep.RESERVE_STOCK)) {
-        this.logger.warn(`[${event.correlationId}] Ignoring duplicate stock-reserved for order ${event.orderId}`);
-        return;
-      }
+      const saga = await this.loadSagaForStep(
+        event.orderId,
+        SagaStep.RESERVE_STOCK,
+        event.correlationId,
+        'stock-reserved',
+        manager,
+      );
+      if (!saga) return;
 
       const order = await this.orderRepo.findById(event.orderId, manager);
       if (!order) throw new OrderNotFoundError(event.orderId);
@@ -60,24 +63,28 @@ export class SagaOrchestrator {
 
   async onStockReservationFailed(event: StockReservationFailedEvent): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);
-      if (!saga?.canHandle(SagaStep.RESERVE_STOCK)) {
-        this.logger.warn(
-          `[${event.correlationId}] Ignoring duplicate stock-reservation-failed for order ${event.orderId}`,
-        );
-        return;
-      }
+      const saga = await this.loadSagaForStep(
+        event.orderId,
+        SagaStep.RESERVE_STOCK,
+        event.correlationId,
+        'stock-reservation-failed',
+        manager,
+      );
+      if (!saga) return;
       await this.performCancellation(manager, saga, event.orderId, event.reason);
     });
   }
 
   async onPaymentProcessed(event: PaymentProcessedEvent): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);
-      if (!saga?.canHandle(SagaStep.PROCESS_PAYMENT)) {
-        this.logger.warn(`[${event.correlationId}] Ignoring duplicate payment-processed for order ${event.orderId}`);
-        return;
-      }
+      const saga = await this.loadSagaForStep(
+        event.orderId,
+        SagaStep.PROCESS_PAYMENT,
+        event.correlationId,
+        'payment-processed',
+        manager,
+      );
+      if (!saga) return;
 
       const advanced = saga.advance();
       await this.sagaRepo.update(advanced, manager);
@@ -105,11 +112,14 @@ export class SagaOrchestrator {
 
   async onPaymentFailed(event: PaymentFailedEvent): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);
-      if (!saga?.canHandle(SagaStep.PROCESS_PAYMENT)) {
-        this.logger.warn(`[${event.correlationId}] Ignoring duplicate payment-failed for order ${event.orderId}`);
-        return;
-      }
+      const saga = await this.loadSagaForStep(
+        event.orderId,
+        SagaStep.PROCESS_PAYMENT,
+        event.correlationId,
+        'payment-failed',
+        manager,
+      );
+      if (!saga) return;
 
       const compensating = saga.startCompensation(event.reason);
       await this.sagaRepo.update(compensating, manager);
@@ -129,11 +139,14 @@ export class SagaOrchestrator {
 
   async onStockReleased(event: StockReleasedEvent): Promise<void> {
     await this.dataSource.transaction(async (manager) => {
-      const saga = await this.sagaRepo.findByOrderIdWithLock(event.orderId, manager);
-      if (!saga?.canHandle(SagaStep.RELEASE_STOCK)) {
-        this.logger.warn(`[${event.correlationId}] Ignoring duplicate stock-released for order ${event.orderId}`);
-        return;
-      }
+      const saga = await this.loadSagaForStep(
+        event.orderId,
+        SagaStep.RELEASE_STOCK,
+        event.correlationId,
+        'stock-released',
+        manager,
+      );
+      if (!saga) return;
       await this.performCancellation(manager, saga, event.orderId, saga.lastError ?? 'Payment failed');
     });
   }
@@ -178,6 +191,21 @@ export class SagaOrchestrator {
         );
       }
     }
+  }
+
+  private async loadSagaForStep(
+    orderId: string,
+    step: SagaStep,
+    correlationId: string,
+    eventLabel: string,
+    manager: EntityManager,
+  ): Promise<Saga | null> {
+    const saga = await this.sagaRepo.findByOrderIdWithLock(orderId, manager);
+    if (!saga?.canHandle(step)) {
+      this.logger.warn(`[${correlationId}] Ignoring duplicate ${eventLabel} for order ${orderId}`);
+      return null;
+    }
+    return saga;
   }
 
   private async performCancellation(
